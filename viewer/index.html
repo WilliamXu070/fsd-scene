@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scene replay · FSD research</title>
+<link rel="stylesheet" href="/style.css">
+<script type="importmap">{"imports":{"three":"/vendor/three.module.js"}}</script>
+</head>
+<body>
+<div class="workspace">
+  <header class="topbar">
+    <div class="identity"><span class="mark" aria-hidden="true">▰</span><h1>Scene replay</h1><span class="replay-tag">Recorded replay</span></div>
+    <div class="provenance" id="provenance" role="status">Training status unverified</div>
+  </header>
+  <main class="main-layout">
+    <section class="scene-panel" aria-label="Predicted 3D scene">
+      <div id="viewport"></div>
+      <div class="scene-top"><div><p id="scene-title">Waiting for predictions</p><p id="sequence">Your 3D scene will appear when a replay is available.</p></div><div class="view-buttons"><button id="perspective" class="selected" aria-pressed="true">Perspective</button><button id="topdown" aria-pressed="false">Top view</button></div></div>
+      <div id="dataset-note" class="dataset-note" role="note" hidden></div>
+      <div id="empty-state" class="empty-state"><span class="empty-icon" aria-hidden="true">⌖</span><h2>Ready for the first scene</h2><p>The viewer is connected. Waiting for completed prediction frames.</p><small>No model detections are being displayed.</small></div>
+      <div class="scene-bottom"><div class="legend-block"><div class="legend"><span><i class="swatch road"></i>Road</span><span><i class="swatch sidewalk"></i>Sidewalk</span><span><i class="swatch other"></i>Other ground</span><span><i class="swatch people"></i>People</span></div><p class="coverage-note">Road colors are predictions. Camera coverage does not prove observed ground.</p></div><label class="axis-control"><input type="checkbox" id="axes"> Metric grid</label></div>
+      <div class="orbit-hint">Drag to orbit · Scroll to zoom</div>
+    </section>
+    <aside class="observations" aria-label="Synchronized camera observations">
+      <div class="camera-heading"><h2>Camera observations</h2><span id="camera-count">0 / 4</span></div>
+      <div id="cameras" class="camera-stack"></div>
+      <div class="scene-stats"><div><span id="object-count">—</span><small>Visible objects</small></div><div><span id="inference-time">—</span><small title="Recorded synchronized model call, including cold-start overhead on early frames. Not the warmed benchmark.">Recorded model call</small><small class="timing-note">Cold frames included; benchmark separate.</small></div></div>
+      <label class="confidence-control" for="confidence"><span>Object confidence <output id="confidence-value">0.55</output></span><input id="confidence" type="range" min="0" max="1" step="0.01" value="0.55"></label>
+      <p class="data-note" id="data-note">Scene geometry comes from model predictions. The reference vehicle is a fixed graphic.</p>
+      <p class="data-note" id="reference-control" hidden><a id="source-reference" href="/inspect" target="source-reference">Inspect this frame's source data and annotations</a><br><a href="/training" target="training-status">Watch full training progress</a></p>
+    </aside>
+  </main>
+  <footer class="transport">
+    <div class="transport-buttons"><button id="previous" aria-label="Previous frame" disabled>‹</button><button id="play" class="play" aria-label="Play replay" disabled>Play</button><button id="next" aria-label="Next frame" disabled>›</button></div>
+    <div class="timeline"><div class="timeline-labels"><span id="frame-counter">No frames yet</span><span id="timestamp">—</span></div><input id="scrubber" aria-label="Replay frame" type="range" min="0" max="0" value="0" disabled></div>
+    <label class="speed">Playback<select id="speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+  </footer>
+</div>
+<div id="error" role="alert" hidden></div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

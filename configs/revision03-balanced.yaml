@@ -1,0 +1,60 @@
+data:
+  root: data/kitti360
+  train_drives:
+  - '0000'
+  - '0002'
+  val_drives:
+  - '0003'
+  test_drives:
+  - '0004'
+  stride: 5
+  max_sync_ms: 60
+  manifest: manifest.full.json
+model:
+  image_size:
+  - 256
+  - 704
+  fpn_channels: 128
+  context_channels: 64
+  bev_channels: 128
+  bev_size: 160
+  bev_min: -40.0
+  bev_step: 0.5
+  depth_bins: 64
+  depth_min: 1.0
+  depth_max: 80.0
+  num_proposals: 200
+  history_length: 3
+  pretrained: true
+train:
+  seed: 42
+  lr: 0.0001
+  weight_decay: 0.01
+  accumulate: 4
+  epochs_a: 24
+  epochs_b: 8
+  patience: 8
+  min_epochs: 8
+  grad_clip: 5.0
+  workers: 2
+  trainable_scope: all
+  epoch_limit: 8
+runtime:
+  device: cuda
+  mixed_precision: true
+  amp_init_scale: 1024.0
+  compiled: false
+render:
+  ground_z_m: -0.930941852176808
+  ground_calibration: data/kitti360/ground_plane.json
+experiment:
+  id: revision03_positive_balance_balanced
+  stage_record: 09_revision03_balanced
+  initialization: artifacts/runs/revision02-overlap-match/best.pt
+  hypothesis: Car-dominated positive center reduction suppresses pedestrian proposal
+    learning; test positive-only present-class normalization.
+  comparison: Paired weights-only fine-tunes, same R2 best initialization, full model
+    trainable, eight fixed epochs/cosine8; only positive normalization differs.
+loss:
+  match_bev_iou_weight: 2.0
+  center_positive_normalization: present_class

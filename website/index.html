@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A project journal. Layout preview with placeholder text.">
+  <title>Project journal — layout preview</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to article</a>
+  <header class="site-header">
+    <a class="wordmark" href="#top">Project journal</a>
+    <span class="preview-label">Layout preview</span>
+  </header>
+  <div class="page" id="top">
+    <aside class="contents" aria-label="Article contents">
+      <button class="contents-toggle" aria-expanded="false" aria-controls="chapter-links">On this page <span aria-hidden="true">+</span></button>
+      <nav id="chapter-links" aria-label="Chapters">
+        <a href="#introduction" aria-current="location">Introduction</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#experiments">Experiments</a>
+        <a href="#observations">Observations</a>
+        <a href="#lessons">Lessons</a>
+        <a href="#references">References</a>
+      </nav>
+    </aside>
+    <main id="main" tabindex="-1">
+      <article>
+        <header class="article-header">
+          <h1>Your project title goes here</h1>
+          <p class="byline">Author name <span aria-hidden="true">/</span> Date</p>
+          <p class="lede">Placeholder text for a short introduction. Your writing will go here.</p>
+        </header>
+        <section id="introduction" aria-labelledby="introduction-title">
+          <h2 id="introduction-title">Introduction</h2>
+          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum.</p>
+        </section>
+        <section id="architecture" aria-labelledby="architecture-title">
+          <h2 id="architecture-title">Architecture</h2>
+          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras mattis consectetur purus sit amet fermentum. Etiam porta sem malesuada magna mollis euismod.</p>
+          <h3>A subsection title</h3>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vitae elit libero, a pharetra augue. Donec sed odio dui. Praesent commodo cursus magna.</p>
+          <aside class="note" aria-label="Placeholder note"><p><strong>A note</strong> — Placeholder text for a short aside or clarification.</p></aside>
+        </section>
+        <section id="experiments" aria-labelledby="experiments-title">
+          <h2 id="experiments-title">Experiments</h2>
+          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum id ligula porta felis euismod semper. Sed posuere consectetur est at lobortis.</p>
+          <details>
+            <summary>Example expandable details</summary>
+            <div class="detail-content"><p>Placeholder text for additional detail. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed diam eget risus varius blandit sit amet non magna.</p></div>
+          </details>
+        </section>
+        <section id="observations" aria-labelledby="observations-title">
+          <h2 id="observations-title">Observations</h2>
+          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.</p>
+          <ul><li>Placeholder list item.</li><li>Another placeholder list item.</li><li>A final placeholder list item.</li></ul>
+        </section>
+        <section id="lessons" aria-labelledby="lessons-title">
+          <h2 id="lessons-title">Lessons</h2>
+          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.</p>
+        </section>
+        <section id="references" aria-labelledby="references-title">
+          <h2 id="references-title">References</h2>
+          <p class="muted">Placeholder text. References will be added here.</p>
+        </section>
+      </article>
+      <footer class="article-footer"><span>Project journal</span><a href="#top">Back to top</a></footer>
+    </main>
+  </div>
+</body>
+</html>

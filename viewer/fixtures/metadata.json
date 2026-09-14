@@ -1,0 +1,8 @@
+{
+  "provenance": "fixture",
+  "bev_min": -40,
+  "bev_step": 2,
+  "note": "Original synthetic geometry for UI testing only.",
+  "ground_z": 0,
+  "ground_source": "Synthetic fixture coordinates"
+}

@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1320" viewBox="0 0 2400 1320">
+<title>Original custom six-camera scene model</title>
+<desc>Image features are lifted into a shared BEV grid, then road and object heads predict scene geometry. Optional late refinement is distinguished from the trained Stage A route.</desc>
+<rect width="2400" height="1320" fill="#f5f1eb"/>
+<text x="55" y="35" dominant-baseline="text-before-edge" font-family="Georgia, serif" font-size="56" font-weight="400" fill="#232b30">From camera images to a 3D scene</text>
+<text x="58" y="111" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="400" fill="#5c666b">Our original custom pipeline  /  six-camera nuScenes version  /  implementation reference</text>
+<polyline points="55,170 2345,170" fill="none" stroke="#c9cecb" stroke-width="2"/>
+<text x="55" y="197" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#232b30">01  IMAGE FEATURES</text>
+<text x="865" y="197" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#232b30">02  IMAGE → GROUND GEOMETRY</text>
+<text x="1545" y="197" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#232b30">03  SHARED SCENE FEATURES → PREDICTIONS</text>
+<rect x="55" y="310" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="68" y="327" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 1</text>
+<rect x="153" y="310" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="166" y="327" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 2</text>
+<rect x="55" y="378" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="68" y="395" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 3</text>
+<rect x="153" y="378" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="166" y="395" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 4</text>
+<rect x="55" y="446" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="68" y="463" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 5</text>
+<rect x="153" y="446" width="88" height="56" rx="12" fill="#e5e5df" stroke="#c9cecb" stroke-width="2"/>
+<text x="166" y="463" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#232b30">CAM 6</text>
+<text x="55" y="250" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#232b30">Six views</text>
+<text x="55" y="540" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#232b30">6 × 3 × 256 × 704</text>
+<text x="55" y="580" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Synchronized RGB</text>
+<polyline points="251,400 297,400" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="297,400 284.0,394.0 284.0,406.0" fill="#232b30"/>
+<rect x="300" y="303" width="240" height="198" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="318" y="323" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">ResNet-50</text>
+<text x="318" y="370" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Shared per camera</text>
+<text x="318" y="405" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">ImageNet weights</text>
+<text x="318" y="440" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Stride 8 / 16 / 32</text>
+<text x="305" y="540" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">C3: 512 channels</text>
+<text x="305" y="577" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">C4: 1,024  ·  C5: 2,048</text>
+<polyline points="540,400 585,400" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="585,400 572.0,394.0 572.0,406.0" fill="#232b30"/>
+<text x="590" y="250" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#232b30">Feature pyramid</text>
+<rect x="590" y="310" width="226" height="64" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="607" y="330" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#232b30">P3   128 × 32 × 88</text>
+<rect x="609" y="395" width="207" height="64" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="623" y="415" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="23" font-weight="400" fill="#232b30">P4   128 × 16 × 44</text>
+<rect x="628" y="480" width="188" height="64" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="641" y="500" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="23" font-weight="400" fill="#232b30">P5   128 × 8 × 22</text>
+<polyline points="794,480 794,461" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="794,461 788.0,474.0 800.0,474.0" fill="#232b30"/>
+<polyline points="794,395 794,376" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="794,376 788.0,389.0 800.0,389.0" fill="#232b30"/>
+<text x="590" y="580" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Top-down FPN fusion</text>
+<polyline points="816,342 843,342 843,322 870,322" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="870,322 857.0,316.0 857.0,328.0" fill="#232b30"/>
+<polyline points="843,342 843,483 870,483" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="870,483 857.0,477.0 857.0,489.0" fill="#232b30"/>
+<rect x="870" y="262" width="285" height="128" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="888" y="282" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#232b30">Depth probabilities</text>
+<text x="888" y="329" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">64 radial bins: 1–80 m</text>
+<rect x="870" y="429" width="285" height="118" rx="12" fill="#dce8ef" stroke="#c9cecb" stroke-width="2"/>
+<text x="888" y="449" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Image context</text>
+<text x="888" y="496" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">64 channels per pixel</text>
+<text x="870" y="580" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#232b30">Both heads use P3</text>
+<polyline points="1155,322 1190,322 1190,385 1230,385" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1230,385 1217.0,379.0 1217.0,391.0" fill="#232b30"/>
+<polyline points="1155,488 1190,488 1190,420 1230,420" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1230,420 1217.0,414.0 1217.0,426.0" fill="#232b30"/>
+<rect x="1230" y="305" width="267" height="208" rx="12" fill="#efe3cc" stroke="#c9cecb" stroke-width="2"/>
+<text x="1248" y="325" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#232b30">Lift + BEV pooling</text>
+<text x="1248" y="372" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Depth-weight context</text>
+<text x="1248" y="407" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">along camera rays</text>
+<text x="1248" y="442" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Pool all six views</text>
+<rect x="1230" y="550" width="267" height="112" rx="12" fill="#efe3cc" stroke="#c9cecb" stroke-width="2"/>
+<text x="1248" y="570" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Calibration</text>
+<text x="1248" y="617" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Camera rays → ego</text>
+<polyline points="1363,550 1363,513" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1363,513 1357.0,526.0 1369.0,526.0" fill="#232b30"/>
+<text x="1227" y="690" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">No rich 3D voxel volume</text>
+<polyline points="1497,400 1540,400" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1540,400 1527.0,394.0 1527.0,406.0" fill="#232b30"/>
+<rect x="1540" y="290" width="280" height="152" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<text x="1558" y="310" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">BEV CNN</text>
+<text x="1558" y="357" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">64 → 128 channels</text>
+<text x="1558" y="392" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">3 residual blocks</text>
+<rect x="1576" y="457" width="218" height="112" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<rect x="1567" y="466" width="218" height="112" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<rect x="1558" y="475" width="218" height="112" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<polyline points="1585,475 1585,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1612,475 1612,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1639,475 1639,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1666,475 1666,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1693,475 1693,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1720,475 1720,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1747,475 1747,587" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1558,503 1776,503" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1558,531 1776,531" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1558,559 1776,559" fill="none" stroke="#b4c9bc" stroke-width="1"/>
+<polyline points="1680,442 1680,457" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1680,457 1686.0,444.0 1674.0,444.0" fill="#232b30"/>
+<text x="1545" y="613" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#232b30">128 × 160 × 160</text>
+<text x="1545" y="654" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">80 × 80 m; 0.5 m cells</text>
+<text x="1545" y="694" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">BEV = bird’s-eye view</text>
+<polyline points="1795,540 1843,540 1843,320 1880,320" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1880,320 1867.0,314.0 1867.0,326.0" fill="#232b30"/>
+<polyline points="1843,540 1880,540" fill="none" stroke="#232b30" stroke-width="3"/>
+<polygon points="1880,540 1867.0,534.0 1867.0,546.0" fill="#232b30"/>
+<rect x="1880" y="250" width="465" height="165" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<text x="1898" y="270" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Road head</text>
+<text x="1898" y="317" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Road / sidewalk / other known ground</text>
+<text x="1898" y="352" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">3 × 160 × 160 logits</text>
+<text x="1898" y="387" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Unknown labels ignored in training</text>
+<rect x="1880" y="451" width="465" height="222" rx="12" fill="#deebe1" stroke="#c9cecb" stroke-width="2"/>
+<text x="1898" y="471" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Object heads</text>
+<text x="1898" y="518" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">2 center heatmaps: car + pedestrian</text>
+<text x="1898" y="553" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Geometry: offsets, z, log dimensions,</text>
+<text x="1898" y="588" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">sin(yaw), cos(yaw)</text>
+<text x="1898" y="623" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Decode up to 200 initial proposals</text>
+<text x="1899" y="690" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">A  →  Initial boxes + scores</text>
+<text x="1899" y="732" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Stage A uses these without refinement.</text>
+<polyline points="55,782 2345,782" fill="none" stroke="#c9cecb" stroke-width="2"/>
+<text x="55" y="808" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#232b30">04  LATE OBJECT REFINEMENT</text>
+<text x="550" y="808" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="26" font-weight="400" fill="#5c666b">Implemented extension • Stage B was not reached in the full training run</text>
+<rect x="55" y="934" width="285" height="156" fill="#efe3cc"/>
+<polyline points="55,934 340,934 340,1090 55,1090 55,934" fill="none" stroke="#c9cecb" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="73" y="954" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#232b30">A  Initial proposals</text>
+<text x="73" y="1001" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="23" font-weight="400" fill="#5c666b">Boxes + object features</text>
+<text x="73" y="1036" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Up to 200 candidates</text>
+<polyline points="340,1005 385,1005" fill="none" stroke="#232b30" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="385,1005 372.0,999.0 372.0,1011.0" fill="#232b30"/>
+<rect x="385" y="925" width="430" height="180" fill="#dce8ef"/>
+<polyline points="385,925 815,925 815,1105 385,1105 385,925" fill="none" stroke="#c9cecb" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="403" y="945" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Spatial sampling</text>
+<text x="403" y="992" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Project center + eight box corners</text>
+<text x="403" y="1027" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Sample valid P3 / P4 / P5 features</text>
+<text x="403" y="1062" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">from the current camera views</text>
+<text x="402" y="879" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Current camera/FPN features ↓</text>
+<polyline points="815,1005 862,1005" fill="none" stroke="#232b30" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="862,1005 849.0,999.0 849.0,1011.0" fill="#232b30"/>
+<rect x="862" y="925" width="421" height="180" fill="#dce8ef"/>
+<polyline points="862,925 1283,925 1283,1105 862,1105 862,925" fill="none" stroke="#c9cecb" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="880" y="945" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Spatial → temporal</text>
+<text x="880" y="992" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Attention: 128 channels / 4 heads</text>
+<text x="880" y="1027" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">One late refinement block</text>
+<text x="880" y="1062" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Uses aligned historical features</text>
+<text x="870" y="1140" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">↑ Up to 3 prior observations + ego poses</text>
+<polyline points="1283,1005 1330,1005" fill="none" stroke="#232b30" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="1330,1005 1317.0,999.0 1317.0,1011.0" fill="#232b30"/>
+<rect x="1330" y="925" width="429" height="180" fill="#efe3cc"/>
+<polyline points="1330,925 1759,925 1759,1105 1330,1105 1330,925" fill="none" stroke="#c9cecb" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="1348" y="945" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Residual prediction</text>
+<text x="1348" y="992" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Correct position, size and yaw</text>
+<text x="1348" y="1027" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Update object confidence</text>
+<text x="1348" y="1062" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Keep proposal if all views invalid</text>
+<polyline points="1759,1005 1807,1005" fill="none" stroke="#232b30" stroke-width="3" stroke-dasharray="9 7"/>
+<polygon points="1807,1005 1794.0,999.0 1794.0,1011.0" fill="#232b30"/>
+<rect x="1807" y="925" width="538" height="180" fill="#deebe1"/>
+<polyline points="1807,925 2345,925 2345,1105 1807,1105 1807,925" fill="none" stroke="#c9cecb" stroke-width="2" stroke-dasharray="9 7"/>
+<text x="1825" y="945" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#232b30">Final object scene</text>
+<text x="1825" y="992" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Filter / suppress duplicates → at most 100</text>
+<text x="1825" y="1027" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Metric boxes + class scores → tracking</text>
+<text x="1825" y="1062" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Road predictions remain a separate output</text>
+<polyline points="55,1200 2345,1200" fill="none" stroke="#c9cecb" stroke-width="2"/>
+<text x="55" y="1220" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="25" font-weight="400" fill="#5c666b">Solid: Stage A pathway    ·    Dashed: optional Stage B    ·    FPN sizes are per camera; batch dimension omitted</text>
+<text x="55" y="1262" dominant-baseline="text-before-edge" font-family="Arial, sans-serif" font-size="24" font-weight="400" fill="#5c666b">Source: experiments/nuscenes/code/src/fsd/model.py + training configuration  |  verified 13 September 2026</text>
+</svg>

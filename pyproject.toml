@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "fsd-scene"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["torch", "torchvision", "numpy", "pillow", "scipy", "pyyaml", "requests", "tqdm", "plyfile", "matplotlib", "pytest", "shapely", "ijson==3.4.0.post0", "isal==1.8.0", "psutil"]
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]

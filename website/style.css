@@ -1,0 +1,61 @@
+:root { color-scheme: light; --paper:#f5f1eb; --ink:#232323; --blue:#315c86; --muted:#67635e; --rule:#d5d0c8; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:40px; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:Georgia,'Times New Roman',serif; font-size:18px; line-height:1.72; -webkit-font-smoothing:antialiased; }
+a { color:var(--blue); text-underline-offset:4px; }
+a:hover { text-decoration:underline; }
+a:focus-visible,button:focus-visible,summary:focus-visible { outline:2px solid var(--blue); outline-offset:5px; border-radius:1px; }
+.skip-link { position:fixed; top:12px; left:20px; z-index:5; padding:8px 16px; background:var(--paper); transform:translateY(-160%); }
+.skip-link:focus { transform:translateY(0); }
+.site-header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:21px 4.5vw; }
+.wordmark { color:var(--ink); text-decoration:none; font-size:18px; }
+.preview-label { font:12px/1.4 system-ui,sans-serif; color:var(--muted); }
+.page { max-width:1200px; margin:52px auto 0; padding:0 36px; display:grid; grid-template-columns:160px minmax(0,760px); gap:48px; justify-content:center; align-items:start; }
+.contents { position:sticky; top:44px; padding-top:13px; }
+.contents nav { display:flex; flex-direction:column; gap:8px; }
+.contents a { display:block; padding:4px 12px; border-left:2px solid transparent; color:var(--muted); text-decoration:none; font-size:15px; line-height:1.65; }
+.contents a:hover { color:var(--ink); }
+.contents a[aria-current] { border-color:var(--blue); color:var(--blue); }
+.contents-toggle { display:none; }
+main { min-width:0; }
+h1,h2,h3 { font-weight:500; line-height:1.17; letter-spacing:-.035em; }
+h1 { font-size:clamp(36px,4vw,51px); margin:0 0 13px; max-width:740px; }
+.byline { color:var(--muted); font-size:15px; margin:0; }
+.byline span { padding:0 12px; }
+.lede { font-size:21px; line-height:1.6; margin:32px 0 0; }
+.article-header { margin-bottom:57px; }
+section { scroll-margin-top:30px; margin-bottom:51px; }
+h2 { font-size:33px; margin:0 0 19px; }
+h3 { font-size:24px; margin:28px 0 14px; }
+p { margin:0 0 18px; }
+ul { margin:16px 0 0; padding-left:23px; }
+li { padding-left:5px; margin-bottom:7px; }
+.note { border-left:2px solid #729283; margin:27px 0; padding:3px 0 3px 20px; color:#4d5650; font-size:17px; }
+.note p { margin:0; }
+.note strong { font-weight:normal; color:var(--ink); }
+details { border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); margin-top:25px; }
+summary { cursor:pointer; padding:13px 0; font-size:16px; }
+summary::marker { color:var(--blue); }
+.detail-content { padding:7px 20px 4px; font-size:17px; }
+.muted { color:var(--muted); }
+.article-footer { display:flex; justify-content:space-between; gap:24px; border-top:1px solid var(--rule); padding:23px 0 40px; margin-top:68px; font-size:14px; color:var(--muted); }
+.article-footer a { text-decoration:none; }
+@media(min-width:1400px) { .page { margin-top:65px; } }
+@media(max-width:850px) {
+  html { scroll-padding-top:85px; }
+  .site-header { padding:18px 25px; }
+  .page { display:block; margin:21px auto 0; padding:0 25px; max-width:760px; }
+  .contents { top:0; z-index:2; padding:0; margin:0 0 29px; background:var(--paper); border-bottom:1px solid var(--rule); }
+  .contents-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; background:none; border:0; color:var(--ink); font:14px/1.5 system-ui,sans-serif; padding:15px 0; cursor:pointer; }
+  .contents-toggle span { font-size:21px; font-weight:300; }
+  .contents nav { display:none; padding:0 0 15px; gap:3px; }
+  .contents.is-open nav { display:flex; }
+  h1 { font-size:38px; }
+  h2 { font-size:29px; }
+  .lede { font-size:20px; margin-top:25px; }
+  .article-header { margin-bottom:41px; }
+  section { scroll-margin-top:80px; margin-bottom:39px; }
+  body { font-size:17px; }
+}
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print { .contents,.site-header,.skip-link,.article-footer { display:none; } .page { display:block; padding:0; margin:0; } body { background:white; font-size:12pt; } }

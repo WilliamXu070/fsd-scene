@@ -1,0 +1,21 @@
+.venv/
+data/
+artifacts/
+experiments/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Local outputs and generated model material. Source code, configurations,
+# documentation, tests, the viewer, and the static Pages template remain tracked.
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+*.safetensors
+*.pkl
+*.pickle
+*.log
+.playwright-mcp/
