@@ -3,25 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A project journal. Layout preview with placeholder text.">
-  <title>Project journal — layout preview</title>
+  <meta name="description" content="An attempt to understand, build, train, and optimize a camera-based 3D scene perception model from first principles.">
+  <title>Building a 3D Driving Scene: the why and how</title>
   <link rel="stylesheet" href="style.css">
   <script src="app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to article</a>
   <header class="site-header">
-    <a class="wordmark" href="#top">Project journal</a>
-    <span class="preview-label">Layout preview</span>
+    <a class="wordmark" href="#top">fsd-scene</a>
+    <span class="preview-label">From first principles</span>
   </header>
   <div class="page" id="top">
     <aside class="contents" aria-label="Article contents">
       <button class="contents-toggle" aria-expanded="false" aria-controls="chapter-links">On this page <span aria-hidden="true">+</span></button>
       <nav id="chapter-links" aria-label="Chapters">
-        <a href="#introduction" aria-current="location">Introduction</a>
+        <a href="#opening" aria-current="location">Opening</a>
+        <a href="#why">Why I started</a>
+        <a href="#perception">Perception</a>
         <a href="#architecture">Architecture</a>
-        <a href="#experiments">Experiments</a>
-        <a href="#observations">Observations</a>
+        <a href="#first-model">First model</a>
+        <a href="#training">Training</a>
+        <a href="#results">Results</a>
+        <a href="#sparse">Sparse4D</a>
+        <a href="#performance">Performance</a>
         <a href="#lessons">Lessons</a>
         <a href="#references">References</a>
       </nav>
@@ -29,46 +34,173 @@
     <main id="main" tabindex="-1">
       <article>
         <header class="article-header">
-          <h1>Your project title goes here</h1>
-          <p class="byline">Author name <span aria-hidden="true">/</span> Date</p>
-          <p class="lede">Placeholder text for a short introduction. Your writing will go here.</p>
+          <p class="eyebrow">A camera-only perception experiment</p>
+          <h1>Building a 3D Driving Scene: the why and how</h1>
+          <p class="byline">William Xu <span aria-hidden="true">/</span> September 2026</p>
+          <p class="lede">An attempt to understand, design, train, and optimize a multi-camera 3D scene perception model from first principles.</p>
         </header>
-        <section id="introduction" aria-labelledby="introduction-title">
-          <h2 id="introduction-title">Introduction</h2>
-          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum.</p>
+
+        <section id="opening" aria-labelledby="opening-title">
+          <h2 id="opening-title">Opening</h2>
+          <p>I would like to preface that I am by no means an expert in the field of object perception and autonomous vehicles. However, I thought it would be interesting and invaluable to go through the diligent work of understanding the backbone of this field from first principles, reading the associated literature, and attempting to design, train, and optimize my own model for 3D scene generation.</p>
+          <p>The goal of the following project is to develop something akin to Tesla’s Full Self-Driving UI: standard cameras as the input, and a simplified visual scene containing vehicles, pedestrians, roads, lanes, and road boundaries as the output. Lane detection was later deferred so that I could focus on the more fundamental road and object pipeline.</p>
+          <p>Again, the aim is not to replicate Tesla’s Full Self-Driving platform. The aim is to study the fundamental concepts of computer vision, test what can run on consumer-accessible hardware, and potentially make something fun and cool.</p>
+          <figure class="figure-placeholder">
+            <span class="figure-label">Opening animation</span>
+            <strong>Camera observations become a simplified 3D scene.</strong>
+            <figcaption>Multiple synchronized camera views enter from the left. Learned features, geometry, and object predictions progressively assemble into a bird’s-eye visualizer on the right.</figcaption>
+          </figure>
         </section>
+
+        <section id="why" aria-labelledby="why-title">
+          <h2 id="why-title">Why Did I Start This Project?</h2>
+          <p>In first year, I was forced to commute to the University of Toronto through the QEW and Highway 403. My mind always drifted towards autonomous vehicles and their potential to eliminate this daily headache.</p>
+          <p>The challenge, in my consideration, was the copious amount of compute required to operate a useful autonomous system. Existing vehicles have strict hardware constraints, while cloud inference is not appropriate for decisions requiring immediate and reliable responses. For this reason, I became motivated to learn more about computer vision for robotics and the potential for on-device inference.</p>
+          <p>The principle and format of this analysis follows the same general philosophy as <a href="https://www.tinytpu.com/">TinyTPU</a>: begin from the smallest understandable components, move the data through the complete system, and openly document what worked and what did not.</p>
+        </section>
+
+        <section id="perception" aria-labelledby="perception-title">
+          <h2 id="perception-title">Understanding Perception</h2>
+          <p>At an extremely high level, perception can be reduced to data being inputted, transformed, and outputted. For our scope, the only input modality is vision. This means the model must infer the depth, orientation, and location of surrounding objects without LiDAR information during inference.</p>
+          <div class="equation" aria-label="Perception flow">Camera images → learned features → 3D geometry → scene predictions</div>
+          <p>The main obstruction is that a camera records a two-dimensional projection. A pixel tells us that something exists along a direction leaving the camera, but it does not directly tell us how far away that thing is. Our model must therefore learn both <em>what</em> it sees and <em>where</em> that thing exists in a shared three-dimensional space.</p>
+          <figure class="figure-placeholder">
+            <span class="figure-label">Interactive figure</span>
+            <strong>One pixel corresponds to an entire 3D ray.</strong>
+            <figcaption>A depth slider moves a point along the camera ray and shows how the same image coordinate can represent many possible physical locations.</figcaption>
+          </figure>
+        </section>
+
         <section id="architecture" aria-labelledby="architecture-title">
-          <h2 id="architecture-title">Architecture</h2>
-          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras mattis consectetur purus sit amet fermentum. Etiam porta sem malesuada magna mollis euismod.</p>
-          <h3>A subsection title</h3>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla vitae elit libero, a pharetra augue. Donec sed odio dui. Praesent commodo cursus magna.</p>
-          <aside class="note" aria-label="Placeholder note"><p><strong>A note</strong> — Placeholder text for a short aside or clarification.</p></aside>
+          <h2 id="architecture-title">Understanding Model Architecture</h2>
+          <p>A model architecture simply describes how information moves from the input to the final prediction. Each component receives some numerical representation, transforms it, and gives the result to the following component.</p>
+
+          <h3>Beginning with a neuron</h3>
+          <p>A neuron is fundamentally a weighted mathematical function. It multiplies every input by a learned weight, adds a bias, and passes the result through an activation function.</p>
+          <div class="equation" aria-label="Neuron equation">z = w₁x₁ + w₂x₂ + … + wₙxₙ + b &nbsp;&nbsp; and &nbsp;&nbsp; a = σ(z)</div>
+          <p>A useful intuition is that each neuron acts as a small learned test. Early visual neurons may respond to edges or colour changes. Deeper layers combine these smaller patterns into wheels, windows, roads, and vehicle-like features.</p>
+
+          <h3>From pixels to features</h3>
+          <p>An RGB image is only an array of numbers with height, width, and three colour channels. A convolution moves a small learned filter across this array. Reusing the same filter allows the model to recognize a pattern regardless of where it appears.</p>
+          <p>Our visual backbone used a pretrained ResNet-50. Its deeper stages produced stronger semantic features but at progressively lower spatial resolutions. We then used a Feature Pyramid Network to combine this semantic information with the finer spatial detail required for small and distant objects.</p>
+          <aside class="note"><p><strong>Key insight</strong> — The more spatially we compress a feature map, the more context we gain and the more exact position we lose. The FPN attempts to retain both.</p></aside>
+
+          <h3>From 2D features to a shared 3D space</h3>
+          <p>Each calibrated camera gives us a ray for every image location. If the model assigns depth <span class="math">d</span> to pixel <span class="math">(u,v)</span>, the point can be projected into camera coordinates and then transformed into the vehicle coordinate system.</p>
+          <div class="equation" aria-label="Camera projection equation">p<sub>camera</sub> = dK⁻¹[u, v, 1]ᵀ &nbsp;&nbsp; and &nbsp;&nbsp; p<sub>ego</sub> = Rp<sub>camera</sub> + t</div>
+          <p>Rather than producing one exact depth immediately, our model predicted a probability across 64 possible depth bins. Each image feature was weighted by these probabilities and pooled into a Bird’s-Eye-View grid.</p>
+
+          <h3>Representation is a tradeoff</h3>
+          <p>This became one of the largest lessons throughout the project. The form in which information is represented determines both what the model can understand and how much computation it requires.</p>
+          <p>A full 3D voxel volume describes height, width, and depth everywhere, including the majority of locations containing nothing useful. A BEV representation collapses most vertical structure and reasons over a two-dimensional ground plane. A sparse representation goes further and spends its computation on a limited collection of likely objects.</p>
+          <figure class="figure-placeholder figure-wide">
+            <span class="figure-label">Comparison animation</span>
+            <strong>The same scene represented as voxels, BEV cells, and sparse objects.</strong>
+            <figcaption>A compute counter increases as the representation becomes denser. Selecting each representation reveals the information retained and discarded.</figcaption>
+          </figure>
         </section>
-        <section id="experiments" aria-labelledby="experiments-title">
-          <h2 id="experiments-title">Experiments</h2>
-          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum id ligula porta felis euismod semper. Sed posuere consectetur est at lobortis.</p>
-          <details>
-            <summary>Example expandable details</summary>
-            <div class="detail-content"><p>Placeholder text for additional detail. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas sed diam eget risus varius blandit sit amet non magna.</p></div>
-          </details>
+
+        <section id="first-model" aria-labelledby="first-model-title">
+          <h2 id="first-model-title">Developing My First Model</h2>
+          <p>The project eventually contained two separate data paths. The first complete experiment used four KITTI-360 cameras. I later adapted the pipeline to the six-camera nuScenes format so that I could compare our object detector with Sparse4Dv3. I report these experiments separately because their datasets and training states were different.</p>
+          <p>The first complete architecture moved data through a shared image backbone, predicted depth, pooled the camera evidence into BEV, and then generated road and object predictions.</p>
+          <ol class="pipeline">
+            <li><span>01</span><strong>Images</strong><small>Calibrated camera observations resized to 704 × 256.</small></li>
+            <li><span>02</span><strong>ResNet + FPN</strong><small>Visual features at strides 8, 16, and 32.</small></li>
+            <li><span>03</span><strong>Depth lifting</strong><small>64 depth probabilities and 64 context channels projected into BEV.</small></li>
+            <li><span>04</span><strong>BEV encoder</strong><small>Three residual blocks reason over the shared ground plane.</small></li>
+            <li><span>05</span><strong>Prediction heads</strong><small>Road classes and oriented 3D object proposals.</small></li>
+            <li><span>06</span><strong>Refinement</strong><small>Current image features and previous observations correct each proposal.</small></li>
+          </ol>
+          <p>The object head predicted a centre, vertical position, dimensions, confidence, and yaw. The strongest 200 proposals could enter refinement, after which at most 100 detections were retained.</p>
+          <figure class="figure-placeholder figure-wide">
+            <span class="figure-label">Step-through architecture</span>
+            <strong>Trace one car from image pixels to its final oriented box.</strong>
+            <figcaption>Each step exposes the current tensor dimensions, coordinate system, retained information, and dominant computational cost.</figcaption>
+          </figure>
         </section>
-        <section id="observations" aria-labelledby="observations-title">
-          <h2 id="observations-title">Observations</h2>
-          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.</p>
-          <ul><li>Placeholder list item.</li><li>Another placeholder list item.</li><li>A final placeholder list item.</li></ul>
+
+        <section id="training" aria-labelledby="training-title">
+          <h2 id="training-title">Understanding Training</h2>
+          <p>Training relies on generating a prediction, measuring how wrong it is, and determining how every weight contributed to that error. Gradient descent then makes a small update:</p>
+          <div class="equation" aria-label="Gradient descent equation">θ<sub>new</sub> = θ<sub>old</sub> − η∇<sub>θ</sub>ℒ</div>
+          <p>Our loss combined depth, road classification, object-centre, box geometry, and circular yaw errors. In effect, we were attempting to give the model the data and comparison functions required to make a better prediction.</p>
+          <div class="equation equation-small" aria-label="Combined loss equation">ℒ = λ<sub>d</sub>ℒ<sub>depth</sub> + λ<sub>r</sub>ℒ<sub>road</sub> + λ<sub>c</sub>ℒ<sub>centre</sub> + λ<sub>g</sub>ℒ<sub>geometry</sub> + λ<sub>y</sub>ℒ<sub>yaw</sub></div>
+          <p>We first attempted to overfit sixteen scenes. This was not evidence that the model generalized; it was a mechanical test that the images, labels, loss, gradients, and optimizer could work together. Only unseen validation and sealed testing could measure whether it had learned a useful pattern.</p>
+          <figure class="figure-placeholder">
+            <span class="figure-label">Training-loop animation</span>
+            <strong>Forward pass, loss, backpropagation, and weight update.</strong>
+            <figcaption>Selecting a loss term highlights the exact prediction it supervises and the path its gradient follows backward through the architecture.</figcaption>
+          </figure>
         </section>
+
+        <section id="results" aria-labelledby="results-title">
+          <h2 id="results-title">What Happened?</h2>
+          <p>The four-camera KITTI-360 model ran, learned strong road structure, and produced a complete prediction-only replay. However, its object perception was not accurate enough to create the clean and faithful reconstruction initially imagined.</p>
+          <div class="metric-table" role="table" aria-label="Selected held-out results">
+            <div role="row"><span role="columnheader">Held-out metric</span><span role="columnheader">Result</span></div>
+            <div role="row"><span role="cell">Road IoU</span><span role="cell">87.91%</span></div>
+            <div role="row"><span role="cell">Car BEV AP50</span><span role="cell">36.05%</span></div>
+            <div role="row"><span role="cell">Pedestrian BEV AP50</span><span role="cell">0.355%</span></div>
+            <div role="row"><span role="cell">Cached processing rate</span><span role="cell">28.79–28.94/s</span></div>
+          </div>
+          <p>These are project-specific metrics from the preserved KITTI-360 held-out drive, not official benchmark leaderboard results. The pedestrian result in particular was inadequate. The replay also exposed implausible vehicle clusters, overlapping boxes, coarse road boundaries, and unstable arrangements between adjacent frames.</p>
+          <aside class="note"><p><strong>Key insight</strong> — Getting the entire pipeline to run did not mean that the model could perceive reliably.</p></aside>
+          <figure class="figure-placeholder figure-wide">
+            <span class="figure-label">Evidence viewer</span>
+            <strong>Predicted scene beside the camera data that produced it.</strong>
+            <figcaption>A shared timestamp control shows the original camera images, predictions, optional ground-truth diagnostics, and the false positives or missed objects being discussed.</figcaption>
+          </figure>
+        </section>
+
+        <section id="sparse" aria-labelledby="sparse-title">
+          <h2 id="sparse-title">Rethinking the Architecture with Sparse4D</h2>
+          <p>The first architecture assumed that a sufficiently useful BEV feature map would naturally provide strong object geometry. In practice, depth errors produced incorrect BEV features, weak centre proposals, and boxes that the later refinement stage could not recover.</p>
+          <p>This led me toward Sparse4Dv3 as a reference. Sparse in this context does not simply mean removing voxels. It means representing the scene with a limited collection of object hypotheses and concentrating expensive computation around them.</p>
+          <p>On a separate 403-timestamp nuScenes diagnostic, a complete pretrained Sparse4Dv3 checkpoint achieved 57.46% car BEV AP50, compared with 25.45% for our preserved early six-camera nuScenes baseline. Its matched yaw error was also lower: 4.67° compared with 13.56°. This was not an equal training comparison, but it demonstrated the gap between our first proposal mechanism and a mature pretrained sparse detector.</p>
+          <figure class="figure-placeholder">
+            <span class="figure-label">Object-query animation</span>
+            <strong>Sparse hypotheses repeatedly sample useful image evidence.</strong>
+            <figcaption>Each object stores position, dimensions, yaw, confidence, and learned features. Incorrect hypotheses fade while useful hypotheses move toward observed vehicles.</figcaption>
+          </figure>
+        </section>
+
+        <section id="performance" aria-labelledby="performance-title">
+          <h2 id="performance-title">Understanding Performance</h2>
+          <p>Rendering a UI at 60 FPS and producing 60 entirely new perception updates every second are not equivalent. A renderer can interpolate between slower perception updates, but the model has still only observed the world at the lower rate.</p>
+          <p>Our custom model approached 29 cached scene updates per second, while the stronger pretrained Sparse4Dv3 diagnostic processed approximately 13 scenes per second in FP32. Neither measurement established a complete live 60 FPS camera pipeline.</p>
+          <p>The actual design problem is a balance:</p>
+          <div class="equation" aria-label="Optimization tradeoff">Perception quality ↔ latency ↔ memory</div>
+          <p>TensorRT can improve how the frozen model executes through lower precision, layer fusion, kernel selection, and memory planning. It does not improve what the model learned. The custom model’s depth pooling and rotated suppression require special attention because they cannot be treated as ordinary convolutional layers.</p>
+          <figure class="figure-placeholder">
+            <span class="figure-label">Latency breakdown</span>
+            <strong>Follow one frame through preprocessing, inference, suppression, tracking, and rendering.</strong>
+            <figcaption>A stacked timing bar distinguishes model-only GPU latency from complete fresh-scene latency and UI refresh.</figcaption>
+          </figure>
+        </section>
+
         <section id="lessons" aria-labelledby="lessons-title">
-          <h2 id="lessons-title">Lessons</h2>
-          <p>Placeholder text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet.</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.</p>
+          <h2 id="lessons-title">What I Learned</h2>
+          <p>The largest lesson was that architecture design is largely the process of deciding what information should exist, how it should be represented, and where it must move. Every representation creates a tradeoff between accuracy, spatial detail, memory, and compute.</p>
+          <p>The first model helped me understand camera calibration, convolutional features, depth lifting, BEV construction, object losses, temporal refinement, and evaluation. Its failures then showed me why strong perception systems require careful data, proposal generation, pretrained features, and controlled testing.</p>
+          <p>If I continued this model, I would retain the calibrated multi-camera inputs and useful road representation while replacing the weak dense object proposal branch with a stronger sparse detector. I would optimize only after profiling the complete pathway and would measure every speed improvement against the same frozen accuracy evaluation.</p>
+          <p>The model did not approach Tesla’s perception capabilities. That was never the realistic measure of success. The purpose was to break apart an intimidating system, understand its components from first principles, build an actual implementation, and determine through evidence where my assumptions failed.</p>
         </section>
+
         <section id="references" aria-labelledby="references-title">
           <h2 id="references-title">References</h2>
-          <p class="muted">Placeholder text. References will be added here.</p>
+          <ul class="references">
+            <li><a href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a></li>
+            <li><a href="https://arxiv.org/abs/1612.03144">Feature Pyramid Networks for Object Detection</a></li>
+            <li><a href="https://arxiv.org/abs/2008.05711">Lift, Splat, Shoot</a></li>
+            <li><a href="https://arxiv.org/abs/2311.11722">Sparse4Dv3</a></li>
+            <li><a href="https://www.nuscenes.org/object-detection">nuScenes 3D object-detection evaluation</a></li>
+            <li><a href="https://github.com/WilliamXu070/fsd-scene">Project source and complete experiment evidence</a></li>
+          </ul>
+          <p class="disclosure"><strong>AI-use disclosure.</strong> Codex was used to assist with implementation, experiment orchestration, debugging, evidence organization, and editing. Architectural decisions, project direction, and final claims were reviewed against the preserved source and experiment artifacts.</p>
         </section>
       </article>
-      <footer class="article-footer"><span>Project journal</span><a href="#top">Back to top</a></footer>
+      <footer class="article-footer"><span>fsd-scene</span><a href="#top">Back to top</a></footer>
     </main>
   </div>
 </body>
