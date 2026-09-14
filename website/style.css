@@ -81,3 +81,15 @@ summary::marker { color:var(--blue); }
 }
 @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
 @media print { .contents,.site-header,.skip-link,.article-footer { display:none; } .page { display:block; padding:0; margin:0; } body { background:white; font-size:12pt; } }
+
+/* Embedded report media and code stay inside the existing article column. */
+.media-surface, .code-surface { min-width:0; margin:34px 0; border:1px solid var(--rule); background:rgba(255,255,255,.18); }
+.media-surface img, .media-surface video, .media-surface iframe { display:block; width:100%; height:auto; border:0; }
+.media-surface iframe { aspect-ratio:16 / 9; }
+.media-surface figcaption, .code-surface figcaption { margin:0; padding:13px 18px; color:var(--muted); font:14px/1.55 system-ui,sans-serif; }
+.code-surface figcaption { border-bottom:1px solid var(--rule); }
+.code-surface pre { margin:0; padding:20px; overflow-x:auto; font:13px/1.7 Consolas,'Liberation Mono',monospace; tab-size:4; }
+.code-surface pre:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.code-surface code { font:inherit; }
+article h4 { margin:28px 0 14px; font-size:20px; font-weight:500; line-height:1.35; }
+@media print { .code-surface pre { white-space:pre-wrap; overflow-wrap:anywhere; } }

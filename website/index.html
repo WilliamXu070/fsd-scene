@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="An attempt to understand, build, train, and optimize a camera-based 3D scene perception model from first principles.">
   <title>Building a 3D Driving Scene: the why and how</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=report-20260914">
   <script src="app.js" defer></script>
 </head>
 <body>
@@ -39,8 +39,12 @@
         <section id="opening" aria-labelledby="opening-title">
           <h2 id="opening-title">Opening</h2>
           <p>I would like to preface that I am by no means an expert in the field of object perception and autonomous vehicles. However, I thought it would be interesting and invaluable to go through the diligent work of understanding the backbone of this field from first principles, reading the associated literature, and attempting to design, train, and optimize my own model for 3D scene generation.</p>
-          <p>The goal of the following project is to develop something akin to Tesla’s Full Self-Driving UI: standard cameras as the input, and a simplified visual scene containing vehicles, pedestrians, roads, lanes, and road boundaries as the output. Lane detection was later deferred so that I could focus on the more fundamental road and object pipeline.</p>
-          <p>Again, the aim is not to replicate Tesla’s Full Self-Driving platform. The aim is to study the fundamental concepts of computer vision, test what can run on consumer-accessible hardware, and potentially make something fun and cool.</p>
+          <p>The goal of the following project is to develop something akin to Tesla’s Full Self-Driving UI.</p>
+          <figure class="media-surface">
+            <img src="assets/report-reference-1.png" width="1200" height="675" alt="Reference driving visualization showing simplified cars, trucks, traffic lights, lane markings, and road boundaries around a central vehicle." decoding="async">
+            <figcaption>Reference image from the report: the type of simplified driving scene I would like to generate.</figcaption>
+          </figure>
+          <p>I became interested in the potential for high-performance edge scene generation capabilities in real time. The goal is to adapt a similar model for 3D scene generation on consumer-accessible hardware, in real time. I.e., using standard cameras, with standard vehicles, pedestrians, lanes, roads, and road boundaries as the output.</p>
           <figure class="figure-placeholder">
             <span class="figure-label">Opening animation</span>
             <strong>Camera observations become a simplified 3D scene.</strong>
@@ -50,14 +54,19 @@
 
         <section id="why" aria-labelledby="why-title">
           <h2 id="why-title">Why Did I Start This Project?</h2>
-          <p>In first year, I was forced to commute to the University of Toronto through the QEW and Highway 403. My mind always drifted towards autonomous vehicles and their potential to eliminate this daily headache.</p>
-          <p>The challenge, in my consideration, was the copious amount of compute required to operate a useful autonomous system. Existing vehicles have strict hardware constraints, while cloud inference is not appropriate for decisions requiring immediate and reliable responses. For this reason, I became motivated to learn more about computer vision for robotics and the potential for on-device inference.</p>
-          <p>The principle and format of this analysis follows the same general philosophy as <a href="https://www.tinytpu.com/">TinyTPU</a>: begin from the smallest understandable components, move the data through the complete system, and openly document what worked and what did not.</p>
+          <p>In first year, I was forced to commute to the University of Toronto via the QEW and Highway 403. My mind always drifted towards the potential for autonomous vehicles and their potential to eliminate my daily headache. The only challenge, in my consideration, would be the copious amounts of compute required to make a majority of cars capable of Level 3 or higher automated driving. The significant hardware constraints of the existing fleet, and the inviability of cloud compute due to latency, posed too significant a challenge to overcome.</p>
+          <p>For this very reason, I became motivated to research and learn more about the field of computer vision for robotics and the potential for on-device inference.</p>
+          <p>The principle and format for this detailed analysis follow the same fundamental principles as <a href="https://www.tinytpu.com/">TinyTPU</a>, where the focus of this project will be understanding from first principles and the fundamentals of the project itself.</p>
+          <p>Again, the aim is not to fully replicate Tesla’s Full Self-Driving platform, but to study the fundamental concepts of computer vision and potentially make something fun and cool.</p>
+          <details>
+            <summary>A note on the traffic reference</summary>
+            <div class="detail-content"><p>The <a href="https://www.trucknews.com/transportation/toronto-roads-ranked-third-slowest-in-the-world/1003181160/">article linked in the report</a> describes Toronto’s city-level driving-time ranking in the 2023 TomTom Traffic Index. It does not rank the QEW or Highway 403 individually.</p></div>
+          </details>
         </section>
 
         <section id="perception" aria-labelledby="perception-title">
           <h2 id="perception-title">Understanding Perception</h2>
-          <p>At an extremely high level, perception can be reduced to data being inputted, transformed, and outputted. For our scope, the only input modality is vision. This means the model must infer the depth, orientation, and location of surrounding objects without LiDAR information during inference.</p>
+          <p>At an extremely high level, we can reduce perception to data being input and data being output. For our scope, our only input modality is vision, which means that we will be required to infer the depth, orientation, and location of all objects with reference to the car, without any LiDAR information during inference. Thus, our model must be able to turn 2D projections into 3D semantic positioning in space.</p>
           <div class="equation" aria-label="Perception flow">Camera images → learned features → 3D geometry → scene predictions</div>
           <p>The main obstruction is that a camera records a two-dimensional projection. A pixel tells us that something exists along a direction leaving the camera, but it does not directly tell us how far away that thing is. Our model must therefore learn both <em>what</em> it sees and <em>where</em> that thing exists in a shared three-dimensional space.</p>
           <figure class="figure-placeholder">
@@ -68,32 +77,148 @@
         </section>
 
         <section id="architecture" aria-labelledby="architecture-title">
-          <h2 id="architecture-title">Understanding Model Architecture</h2>
+          <h2 id="architecture-title">Building Our Understanding from the IPFormer Reference</h2>
           <p>A model architecture simply describes how information moves from the input to the final prediction. Each component receives some numerical representation, transforms it, and gives the result to the following component.</p>
+          <p><a href="https://arxiv.org/html/2506.20671v3">IPFormer</a> gave me a reference for thinking about this process. Its task is panoptic scene completion: predicting occupied 3D space, its semantic class, and which individual object it belongs to. It lifts image context using depth probabilities, generates scene-dependent voxel and instance proposals, and refines their relationships through attention. Its final output is a voxel scene with semantic and instance labels.</p>
+          <p>To understand how this becomes possible, I wanted to begin with neurons, build up to image features, and then follow those features into a spatial representation and a final prediction. BEVFormer and VoxFormer help explain different choices along that path. Our own model then adapts these ideas to a smaller road-and-object representation.</p>
 
-          <h3>Beginning with a neuron</h3>
+          <h3 id="neurons">1. Understanding neurons</h3>
           <p>A neuron is fundamentally a weighted mathematical function. It multiplies every input by a learned weight, adds a bias, and passes the result through an activation function.</p>
           <div class="equation" aria-label="Neuron equation">z = w₁x₁ + w₂x₂ + … + wₙxₙ + b &nbsp;&nbsp; and &nbsp;&nbsp; a = σ(z)</div>
           <p>A useful intuition is that each neuron acts as a small learned test. Early visual neurons may respond to edges or colour changes. Deeper layers combine these smaller patterns into wheels, windows, roads, and vehicle-like features.</p>
+          <p>The weights determine how strongly each input contributes. The bias shifts when the neuron responds, and the activation introduces nonlinearity. Without that nonlinearity, stacking weighted sums would still give us a single affine transformation. For example, ReLU keeps a positive value and replaces a negative value with zero. Training changes the weights and biases so that these responses become useful for the prediction.</p>
+          <figure class="code-surface">
+            <figcaption id="neuron-code-title">One neuron, written directly in Python</figcaption>
+            <pre tabindex="0" aria-labelledby="neuron-code-title"><code>inputs = [0.2, 0.8, 0.4]
+weights = [0.5, -0.25, 1.0]
+bias = 0.1
 
-          <h3>From pixels to features</h3>
+z = sum(w * x for w, x in zip(weights, inputs)) + bias
+activation = max(0.0, z)  # ReLU: this example gives 0.4</code></pre>
+          </figure>
+
+          <h3 id="convolutions">2. Understanding Convolutional Neural Networks</h3>
           <p>An RGB image is only an array of numbers with height, width, and three colour channels. A convolution moves a small learned filter across this array. Reusing the same filter allows the model to recognize a pattern regardless of where it appears.</p>
-          <p>Our visual backbone used a pretrained ResNet-50. Its deeper stages produced stronger semantic features but at progressively lower spatial resolutions. We then used a Feature Pyramid Network to combine this semantic information with the finer spatial detail required for small and distant objects.</p>
-          <aside class="note"><p><strong>Key insight</strong> — The more spatially we compress a feature map, the more context we gain and the more exact position we lose. The FPN attempts to retain both.</p></aside>
+          <p>At one image location, a 3 × 3 filter reads a small patch across the input channels, multiplies those values by its weights, and sums them. Repeating this operation across the image produces a feature map. Using several filters gives us several output channels, each containing a different learned response at every spatial location.</p>
+          <p>A channel is therefore not another camera, another depth plane, or necessarily a named object category. It is one coordinate in a learned feature description. The pattern that describes a car may be distributed across many channels. This is how an image can change from three colour channels into 128 feature channels while still retaining a two-dimensional spatial arrangement.</p>
+          <p>Stride determines how far the filter moves each time. A larger stride reduces the number of spatial positions. This saves computation and lets later features cover more of the original image, but a small pedestrian may now occupy only one or two feature locations. More channels cannot automatically restore positions that were lost through downsampling.</p>
 
-          <h3>From 2D features to a shared 3D space</h3>
+          <h3 id="residual-networks">3. Understanding Residual Networks</h3>
+          <p>Once we stack many layers, the model has to learn useful transformations through a long sequence of operations. A residual block adds its input back to the transformed output. The block can therefore learn a correction to a representation that already exists.</p>
+          <div class="equation" aria-label="Residual block equation">y = x + F(x)</div>
+          <p>If the learned branch produces zero, the shortcut still passes the input forward. It also gives gradients a direct route through the addition. This makes deep networks easier to optimize, although it does not guarantee that training will succeed. The two branches must have compatible shapes; a projection shortcut can adjust channels and resolution when they change. This is the central construction in <a href="https://arxiv.org/abs/1512.03385">ResNet</a>.</p>
+          <p>For our model, ImageNet pretraining provided the initial ResNet-50 weights. Those weights already encoded useful visual patterns, but they had not learned our camera geometry or our 3D output task. The backbone still had to work with the depth and detection components during training.</p>
+
+          <h3 id="fpn">4. Understanding FPN</h3>
+          <p>Our visual backbone used a pretrained ResNet-50. Its deeper stages produced stronger semantic features but at progressively lower spatial resolutions. We then used a Feature Pyramid Network to combine this semantic information with the finer spatial detail required for small and distant objects.</p>
+          <p>An <a href="https://arxiv.org/abs/1612.03144">FPN</a> takes a coarse feature map, upsamples it to the resolution of an earlier stage, and combines it with a lateral projection of that earlier stage. A 1 × 1 convolution makes the channel dimensions compatible. The result is a pyramid of feature maps: the finer levels have access to information from deeper layers, while retaining their own spatial samples.</p>
+          <aside class="note"><p><strong>Key insight</strong> — The more spatially we compress a feature map, the more context we gain and the more exact position we lose. The FPN attempts to retain both.</p></aside>
+          <figure class="code-surface">
+            <figcaption id="feature-code-title">Following the tensor shapes for one camera in our model</figcaption>
+            <pre tabindex="0" aria-labelledby="feature-code-title"><code># Shapes below are [channels, height, width].
+image = [3, 256, 704]
+
+# ResNet stages: each position covers progressively more image context.
+C3 = [512, 32, 88]    # stride 8
+C4 = [1024, 16, 44]   # stride 16
+C5 = [2048, 8, 22]    # stride 32
+
+# FPN combines scales and gives them a common channel width.
+P3 = [128, 32, 88]
+P4 = [128, 16, 44]
+P5 = [128, 8, 22]</code></pre>
+          </figure>
+
+          <h3 id="bevformer">5. Understanding BEVFormer</h3>
+          <p>A feature map is still organized by image coordinates. A car seen by two cameras occupies two different image locations. A Bird’s-Eye-View, or BEV, representation gives us a shared ground-plane coordinate system so that both cameras can contribute evidence about the same physical location.</p>
+          <p><a href="https://arxiv.org/abs/2203.17270">BEVFormer</a> creates a learned query at each BEV grid position. A query is a feature vector used to retrieve relevant information. Spatial cross-attention projects reference points at different heights into the cameras and samples nearby image features. The query combines that evidence into a representation of its location.</p>
+          <p>Temporal self-attention also provides access to history BEV features, aligned using ego motion. This gives the current representation evidence from previous observations, which can help when an object is partly occluded. This attention-based BEV construction is a reference for understanding the task; our implementation constructs BEV using depth lifting and pooling instead.</p>
+
+          <h3 id="bev-pooling">6. Understanding BEV pooling</h3>
           <p>Each calibrated camera gives us a ray for every image location. If the model assigns depth <span class="math">d</span> to pixel <span class="math">(u,v)</span>, the point can be projected into camera coordinates and then transformed into the vehicle coordinate system.</p>
           <div class="equation" aria-label="Camera projection equation">p<sub>camera</sub> = dK⁻¹[u, v, 1]ᵀ &nbsp;&nbsp; and &nbsp;&nbsp; p<sub>ego</sub> = Rp<sub>camera</sub> + t</div>
+          <p>Here, <span class="math">K</span> describes a pinhole camera’s intrinsics, while <span class="math">R</span> and <span class="math">t</span> rotate and translate from camera to vehicle coordinates. In this equation, <span class="math">d</span> is depth along the camera’s optical axis. Our code instead uses calibrated unit rays and radial range: the camera point is the unit ray multiplied by its range. That distinction also allows the KITTI fisheye cameras to use their own calibrated rays.</p>
           <p>Rather than producing one exact depth immediately, our model predicted a probability across 64 possible depth bins. Each image feature was weighted by these probabilities and pooled into a Bird’s-Eye-View grid.</p>
+          <p>This follows the central lifting idea in <a href="https://arxiv.org/abs/2008.05711">Lift, Splat, Shoot</a>. At one feature location, we have a context vector and a probability for each possible depth. Multiplying them distributes the same visual evidence along the camera ray. A likely depth receives a stronger contribution than an unlikely depth.</p>
+          <p>We then transform each candidate point into vehicle coordinates, find its BEV cell, and accumulate its weighted context there. Evidence from different pixels and cameras can land in the same cell. Our implementation divides by accumulated probability mass when that mass exceeds one; it retains weaker evidence at sparsely supported cells. This pooling is different from simply shrinking an image: it groups features by their estimated physical location.</p>
+          <figure class="code-surface">
+            <figcaption id="pooling-code-title">Depth lifting and BEV pooling — explanatory pseudocode</figcaption>
+            <pre tabindex="0" aria-labelledby="pooling-code-title"><code>for camera, pixel in feature_locations:
+    context = context_features[camera, pixel]
+    for depth_bin in depth_bins:
+        weight = depth_probability[camera, pixel, depth_bin]
+        camera_point = unit_ray[camera, pixel] * depth_bin.range
+        ego_point = rotate(camera_point) + camera_translation
+        cell = ground_plane_cell(ego_point)
+        if valid(camera, pixel, cell):
+            bev[cell] += weight * context
+            mass[cell] += weight
 
-          <h3>Representation is a tradeoff</h3>
+bev = bev / maximum(mass, 1.0)</code></pre>
+          </figure>
+          <p>In the actual implementation, these operations are batched and depth is processed in chunks. The model therefore avoids retaining the entire depth-by-image-by-channel feature volume at once.</p>
+
+          <h3 id="bev-cnn">7. Understanding BEV CNN</h3>
+          <p>After pooling, the features have a shared spatial meaning. Neighbouring cells represent neighbouring areas around the car, so a convolution can now combine evidence on the ground plane. A group of nearby responses may support a vehicle, while a larger connected region may support a road.</p>
+          <p>Our pooled tensor has 64 channels on a 160 × 160 grid, with each cell covering 0.5 × 0.5 metres. The BEV encoder projects this to 128 channels and applies three residual blocks. Separate prediction heads read those features to classify road cells, score object centres, and predict box geometry. The channels can carry height-related information even though height is no longer a separate grid axis.</p>
+
+          <h3 id="voxel-proposals">8. Understanding VoxFormer, VoxelProposalLayer, and geotemporal attention</h3>
+          <p>A voxel is a small cell in a three-dimensional grid. Before spending attention on every voxel, we can use estimated depth to propose where visible surfaces are likely to exist. In <a href="https://openaccess.thecvf.com/content/CVPR2023/html/Li_VoxFormer_Sparse_Voxel_Transformer_for_Camera-Based_3D_Semantic_Scene_Completion_CVPR_2023_paper.html">VoxFormer</a>, a class-agnostic proposal stage uses depth and occupancy correction to select sparse voxel queries. Those queries retrieve image features through deformable cross-attention. Mask tokens and self-attention then extend the representation to the remaining volume for semantic scene completion.</p>
+          <p>The important function behind the <code>VoxelProposalLayer</code> idea in my outline is selecting an initial set of spatial hypotheses. A voxel proposal refers to a volume cell, while an instance proposal represents a possible individual object. They provide different units for collecting evidence. Our repository performs object proposal generation in <code>decode_proposals</code>; it does not contain a class named <code>VoxelProposalLayer</code>.</p>
+          <p>In IPFormer, visibility guides scene-dependent proposal initialization, and instance features ultimately associate voxels with objects. Its reported setup uses forward-facing, non-temporal imagery. The temporal part of the explanation below is our project’s adaptation, with BEVFormer providing a separate temporal reference. <a href="https://arxiv.org/html/2506.20671v3#S3">IPFormer’s methodology</a> describes the original voxel and instance pathway.</p>
+
+          <h4>Applying it to our feature maps</h4>
+          <p>Our BEV object head first produces likely centres and an initial box at each selected centre. Each proposal carries geometry and a learned feature vector. That vector becomes a query: a numerical description that can request additional evidence before the model commits to its final box.</p>
+
+          <h4>Spatial sampling and residual prediction</h4>
+          <p>For each proposed box, our refiner takes the centre and eight corners, projects them into each camera, and bilinearly samples the three FPN levels. Bilinear sampling combines the neighbouring feature values when a projected point lies between grid locations. Points outside a valid view are masked, so missing observations are not treated as useful evidence.</p>
+          <p>Attention compares the proposal’s query with keys made from the sampled features. The resulting weights determine how much of each value vector to combine. Multi-head attention lets several learned comparisons operate in parallel. The refined feature then predicts a residual: a correction to the box’s centre, size, orientation, and class scores.</p>
+          <figure class="code-surface">
+            <figcaption id="refinement-code-title">Refining an existing proposal — explanatory pseudocode</figcaption>
+            <pre tabindex="0" aria-labelledby="refinement-code-title"><code>points = [box.centre, *box.corners]
+image_samples, valid = sample_fpn(project_to_cameras(points))
+query = proposal_features + encode_geometry(box)
+query = spatial_attention(query, image_samples, valid)
+
+memory = align_past_proposals(history, current_ego_pose)
+query = temporal_attention(query, memory)
+delta = predict_box_correction(query)
+
+new_centre = old_centre + delta.centre
+new_size = old_size * exp(clamp(delta.log_size))
+new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
+          </figure>
+
+          <h4>Temporal sampling</h4>
+          <p>Previous observations can provide features that are weak or missing in the current view. Before using them, we align earlier boxes into the current vehicle coordinate system using the recorded poses. A time encoding tells the model how old the evidence is. We reject incompatible sequences, future timestamps, and history older than the permitted gap.</p>
+          <p>Our refiner can attend to proposals from up to three previous observations. Ego-motion alignment compensates for our own car’s movement; moving objects can still change position independently. Attention must learn which historical evidence is helpful, and a separate association step supplies persistent track IDs. The implemented network performs one late spatial-and-temporal refinement block per observation.</p>
+          <aside class="note"><p><strong>Key insight</strong> — We are giving the model data and information that could better inform its prediction. We are effectively building the model for success. A useful initial proposal matters: refinement may correct an inaccurate box, but it cannot reliably recover an object that never entered the proposal set.</p></aside>
+
+          <h3 id="final-scene">9. Final object scene</h3>
+          <p>Once refinement is complete, the runtime filters confidence scores, suppresses overlapping duplicate detections, and associates observations across timestamps. The viewer uses the remaining boxes to place simplified vehicles and pedestrians, while road and sidewalk predictions provide the ground surfaces. The objects’ appearance is a rendering choice; their position, dimensions, and orientation come from the predictions.</p>
+          <p>In our first model, this means road geometry and oriented boxes. Lane detection was later deferred. In the IPFormer reference, the output is instead a completed voxel scene with semantic classes and instance identities.</p>
+
+          <h3 id="architecture-design">10. Understanding how to design an architecture</h3>
+          <p>I began to understand that training relies on how well you can move specific data around in the architecture and generate effective loss and comparison functions. The input, the output, and the information needed between them determine what each component must do. Useful data, supervision, and optimization are still necessary for that architecture to learn.</p>
+
+          <h4>Input, output, and feature detection</h4>
+          <p>For our input, we have camera images, calibration, timestamps, and vehicle poses. For our output, we want road surfaces and object geometry in the vehicle’s coordinate system. Feature detection is the bridge: the image encoder must preserve evidence about objects, and the geometric stages must place that evidence where the output heads can use it.</p>
+
+          <h4>Passing data at each level: the tradeoff</h4>
+          <p>The more we pool or downsample, the less spatial resolution we retain. When we want both high spatial resolution and useful feature descriptions, we need to combine information across levels. That explains the FPN, and it also explains why the refiner returns to the image feature maps after the initial BEV prediction.</p>
+
+          <h4>Representation forms</h4>
           <p>This became one of the largest lessons throughout the project. The form in which information is represented determines both what the model can understand and how much computation it requires.</p>
           <p>A full 3D voxel volume describes height, width, and depth everywhere, including the majority of locations containing nothing useful. A BEV representation collapses most vertical structure and reasons over a two-dimensional ground plane. A sparse representation goes further and spends its computation on a limited collection of likely objects.</p>
+          <p>Depending on the form in which we maintain our data, we can save a substantial amount of memory and computation. A dense feature volume stores <span class="math">X × Y × Z × C</span> values. A BEV grid stores <span class="math">X × Y × C</span>, while an image feature map stores <span class="math">H × W × C</span> per camera. A sparse object representation stores a limited number of feature vectors and their geometry. The spatial meaning of these axes is different, even when two representations contain the same number of values.</p>
+          <p>As an illustration, 160 × 160 cells with 64 channels contain 1,638,400 values. Adding 16 explicit height layers gives 26,214,400 values, or sixteen times as many. This counts feature values only; it is not a measured runtime speedup. BEV sacrifices explicit vertical separation, while sparse objects omit much of the surrounding surface detail. My big learning here was that representation is a major tradeoff.</p>
           <figure class="figure-placeholder figure-wide">
             <span class="figure-label">Comparison animation</span>
             <strong>The same scene represented as voxels, BEV cells, and sparse objects.</strong>
             <figcaption>A compute counter increases as the representation becomes denser. Selecting each representation reveals the information retained and discarded.</figcaption>
           </figure>
+          <h4>Refinement of prediction</h4>
+          <p>Spatial sampling gives a proposal more evidence from the current images. Temporal sampling gives it evidence from earlier observations. The loss then compares the result with supervision, and backpropagation changes the weights along the available paths. Designing the architecture means making useful evidence available at the point where it can improve the prediction, while keeping the cost of those paths manageable.</p>
         </section>
 
         <section id="first-model" aria-labelledby="first-model-title">
@@ -109,6 +234,8 @@
             <li><span>06</span><strong>Refinement</strong><small>Current image features and previous observations correct each proposal.</small></li>
           </ol>
           <p>The object head predicted a centre, vertical position, dimensions, confidence, and yaw. The strongest 200 proposals could enter refinement, after which at most 100 detections were retained.</p>
+          <p>This follows the sequence in my initial outline: an ImageNet-pretrained ResNet-50, FPN, BEV projection, pooling and detection, followed by attention. “Looping attention” describes the refinement idea; the implemented baseline uses one spatial-and-temporal block, with detached history passed between observations. Repeated within-frame refinement would require a separate architecture change.</p>
+          <p>The tensor shapes, pooling rule, and refinement steps above can be traced in <a href="https://github.com/WilliamXu070/fsd-scene/blob/main/src/fsd/model.py">the model implementation</a> and <a href="https://github.com/WilliamXu070/fsd-scene/blob/main/configs/baseline.yaml">the baseline configuration</a>.</p>
           <figure class="figure-placeholder figure-wide">
             <span class="figure-label">Step-through architecture</span>
             <strong>Trace one car from image pixels to its final oriented box.</strong>
@@ -186,9 +313,12 @@
         <section id="references" aria-labelledby="references-title">
           <h2 id="references-title">References</h2>
           <ul class="references">
+            <li><a href="https://arxiv.org/html/2506.20671v3">IPFormer: Visual 3D Panoptic Scene Completion with Context-Adaptive Instance Proposals</a></li>
             <li><a href="https://arxiv.org/abs/1512.03385">Deep Residual Learning for Image Recognition</a></li>
             <li><a href="https://arxiv.org/abs/1612.03144">Feature Pyramid Networks for Object Detection</a></li>
             <li><a href="https://arxiv.org/abs/2008.05711">Lift, Splat, Shoot</a></li>
+            <li><a href="https://arxiv.org/abs/2203.17270">BEVFormer: Learning Bird’s-Eye-View Representation from Multi-Camera Images via Spatiotemporal Transformers</a></li>
+            <li><a href="https://openaccess.thecvf.com/content/CVPR2023/html/Li_VoxFormer_Sparse_Voxel_Transformer_for_Camera-Based_3D_Semantic_Scene_Completion_CVPR_2023_paper.html">VoxFormer: Sparse Voxel Transformer for Camera-Based 3D Semantic Scene Completion</a></li>
             <li><a href="https://arxiv.org/abs/2311.11722">Sparse4Dv3</a></li>
             <li><a href="https://www.nuscenes.org/object-detection">nuScenes 3D object-detection evaluation</a></li>
             <li><a href="https://github.com/WilliamXu070/fsd-scene">Project source and complete experiment evidence</a></li>
