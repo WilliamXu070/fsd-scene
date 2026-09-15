@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 
 ROOT=Path(__file__).resolve().parents[1]
-FILES=('road-contours.js','road-surface.js','vehicles.js','assets/traffic-sedan.mesh.js','assets/ego-racer.mesh.js','assets/KENNEY-LICENSE.txt','assets/ASSET-SOURCES.txt')
+FILES=('road-contours.js','road-surface.js','vehicles.js','orbit-frame.js','assets/traffic-sedan.mesh.js','assets/ego-racer.mesh.js','assets/KENNEY-LICENSE.txt','assets/ASSET-SOURCES.txt')
 
 if __name__=='__main__':
     for relative in FILES:

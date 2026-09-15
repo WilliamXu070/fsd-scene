@@ -4,6 +4,7 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {decodeRoad, visibleObjects} from './math.mjs';
 import {createVehicle,createPerson,styleScene,prepareVehicleAssets} from './scene-style/vehicles.js';
 import {RoadSurface} from './scene-style/road-surface.js';
+import {centerOrbit,followEgoHeight} from './scene-style/orbit-frame.js';
 export {prepareVehicleAssets};
 
 export class SceneRenderer {
@@ -16,7 +17,7 @@ export class SceneRenderer {
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     viewport.append(this.renderer.domElement);
     this.controls=new OrbitControls(this.camera,this.renderer.domElement);
-    this.controls.target.set(10,0,0);this.controls.minDistance=7;this.controls.maxDistance=115;
+    this.controls.target.set(0,0,0);this.controls.minDistance=7;this.controls.maxDistance=115;
     this.controls.maxPolarAngle=Math.PI/2-.035;this.controls.enableDamping=false;
     this.controls.addEventListener('change',()=>this.draw());
     styleScene(this.scene,this.renderer);
@@ -27,7 +28,7 @@ export class SceneRenderer {
       outline:new THREE.LineBasicMaterial({color:'#65818e'}),
       selected:new THREE.LineBasicMaterial({color:'#138570'})
     };
-    this.ego=createVehicle(true);this.ego.scale.set(4.5,1.85,1.5);this.scene.add(this.ego);
+    this.ego=createVehicle(true);this.ego.scale.set(...this.ego.userData.dimensions);this.ego.position.z=this.ego.scale.z/2;this.scene.add(this.ego);
     this.objects=new THREE.Group();this.scene.add(this.objects);
     this.grid=new THREE.GridHelper(80,16,'#a4b1ba','#d9e0e5');this.grid.rotation.x=Math.PI/2;this.grid.visible=false;this.scene.add(this.grid);
     this.resize=new ResizeObserver(()=>{
@@ -57,7 +58,7 @@ export class SceneRenderer {
       this.frame=frame;
       const {width,height}=frame.road_display,cells=decodeRoad(frame.road_display);
       this.surface.update(cells,width,height,metadata.bev_min,metadata.bev_step,frame.ground_z,this.rawRoad);
-      this.ego.position.z=frame.ground_z+.75;this.grid.position.z=frame.ground_z-.06;
+      followEgoHeight(this.camera,this.controls,this.ego,frame.ground_z+this.ego.scale.z/2);this.grid.position.z=frame.ground_z-.06;
     }
     const visible=visibleObjects(frame,threshold);
     visible.forEach((object,i)=>{
@@ -76,7 +77,7 @@ export class SceneRenderer {
     this.draw();
   }
   view(top) {
-    this.camera.position.set(top?7.99:-19,top?0:-15,top?58:24);this.controls.target.set(8,0,0);this.controls.update();this.draw();
+    centerOrbit(this.camera,this.controls,this.ego,top);this.draw();
   }
   draw() {
     if(this.pending || document.hidden)return;

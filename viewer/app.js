@@ -5,10 +5,13 @@ import {ReplayTiming} from '/replay-timing.js';
 import {prepareVehicleAssets,createVehicle,createPerson,styleScene} from '/scene-style/vehicles.js';
 import {RoadSurface} from '/scene-style/road-surface.js';
 import {cellsFromRecord} from '/scene-style/road-contours.js';
+import {centerOrbit,followEgoHeight} from '/scene-style/orbit-frame.js';
 
 const $ = id => document.getElementById(id);
 const viewport = $('viewport');
-try {await prepareVehicleAssets();} catch(problem) {$('error').hidden=false;$('error').textContent=problem.message;throw problem;}
+const characterPreview=['localhost','127.0.0.1'].includes(location.hostname)&&new URLSearchParams(location.search).get('ego')==='mcqueen';
+try {await prepareVehicleAssets({egoAsset:characterPreview?'ego-mcqueen':'ego-racer'});} catch(problem) {$('error').hidden=false;$('error').textContent=problem.message;throw problem;}
+if(characterPreview)document.querySelector('.coverage-note a').textContent='Traffic asset licenses (ego: user-provided local preview)';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(42,1,.1,240);
 camera.up.set(0,0,1);
@@ -18,13 +21,13 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.75));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 viewport.append(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(10,0,0);
+controls.target.set(0,0,0);
 controls.minDistance=7;controls.maxDistance=115;
 controls.maxPolarAngle=Math.PI/2-.035;
 controls.enableDamping=false;
 controls.update();
 styleScene(scene,renderer);
-const ego=createVehicle(true);ego.scale.set(4.5,1.85,1.5);ego.position.set(0,0,.75);scene.add(ego);
+const ego=createVehicle(true);ego.scale.set(...ego.userData.dimensions);ego.position.set(0,0,ego.scale.z/2);scene.add(ego);
 const objects=new THREE.Group();scene.add(objects);const pool=[];
 const axes=new THREE.Group();
 const grid=new THREE.GridHelper(80,16,'#a4b1ba','#d9e0e5');grid.rotation.x=Math.PI/2;grid.position.z=-.06;axes.add(grid);
@@ -50,7 +53,7 @@ function ensureCameraCards(){
 ensureCameraCards();
 function error(message){$('error').hidden=!message;$('error').textContent=message||'';}
 function applyGround(ground){
-  ego.position.z=ground+.75;axes.position.z=ground;
+  followEgoHeight(camera,controls,ego,ground+ego.scale.z/2);axes.position.z=ground;
   $('axes').title=`Ground z=${ground.toFixed(2)}m. ${status.ground_source||'Static inference calibration'}`;
 }
 function updateProvenance(){
@@ -129,7 +132,7 @@ $('scrubber').oninput=()=>{setPlaying(false);scrubRequest(Number($('scrubber').v
 $('confidence').oninput=()=>{$('confidence-value').value=Number($('confidence').value).toFixed(2);if(frame)updateObjects(frame);};
 $('axes').onchange=()=>{axes.visible=$('axes').checked;};
 $('raw-road').onchange=()=>{if(frame)updateRoad(frame);};
-function view(top){camera.position.set(top?7.99:-19,top?0:-15,top?58:24);controls.target.set(8,0,0);controls.update();$('topdown').classList.toggle('selected',top);$('perspective').classList.toggle('selected',!top);$('topdown').setAttribute('aria-pressed',top);$('perspective').setAttribute('aria-pressed',!top);}
+function view(top){centerOrbit(camera,controls,ego,top);$('topdown').classList.toggle('selected',top);$('perspective').classList.toggle('selected',!top);$('topdown').setAttribute('aria-pressed',top);$('perspective').setAttribute('aria-pressed',!top);}
 $('topdown').onclick=()=>view(true);$('perspective').onclick=()=>view(false);
 view(false);
 window.addEventListener('keydown',event=>{if(event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement)return;if(event.code==='Space'&&status.frames){event.preventDefault();setPlaying(!playing);}else if(event.key==='ArrowRight'){setPlaying(false);loadFrame(index+1);}else if(event.key==='ArrowLeft'){setPlaying(false);loadFrame(index-1);}});

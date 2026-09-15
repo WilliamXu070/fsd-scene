@@ -5,6 +5,7 @@ import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {traceRegions,signedArea,smoothRing,metricRegions,cellsFromRecord} from '../viewer/scene-style/road-contours.js';
 import {decodeRoad} from '../website/replay/math.mjs';
+import {centerOrbit,followEgoHeight} from '../viewer/scene-style/orbit-frame.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const area=regions=>regions.reduce((sum,r)=>sum+signedArea(r.outer)+r.holes.reduce((s,h)=>s+signedArea(h),0),0);
@@ -78,9 +79,61 @@ test('Blender vehicle exports are normalized finite geometry with known material
 });
 
 test('local and Pages render modules/assets are byte-identical',()=>{
-  for(const name of ['road-contours.js','road-surface.js','vehicles.js','assets/traffic-sedan.mesh.js','assets/ego-racer.mesh.js','assets/KENNEY-LICENSE.txt','assets/ASSET-SOURCES.txt']) {
+  for(const name of ['road-contours.js','road-surface.js','vehicles.js','orbit-frame.js','assets/traffic-sedan.mesh.js','assets/ego-racer.mesh.js','assets/KENNEY-LICENSE.txt','assets/ASSET-SOURCES.txt']) {
     assert.deepEqual(fs.readFileSync(path.join(root,'viewer/scene-style',name)),fs.readFileSync(path.join(root,'website/replay/scene-style',name)),name);
   }
+});
+
+test('perspective, top and reset orbit exactly around the ego centre',async()=>{
+  const THREE=await import(pathToFileURL(path.join(root,'website/replay/vendor/three.module.js')).href);
+  const camera=new THREE.PerspectiveCamera(42,1.4,.1,240);camera.up.set(0,0,1);
+  const ego={position:new THREE.Vector3(0,0,-.7458)};
+  const controls={target:new THREE.Vector3(8,0,0),update(){camera.lookAt(this.target);camera.updateMatrixWorld();}};
+  for(const top of [false,true,false]) {
+    centerOrbit(camera,controls,ego,top);
+    assert.ok(controls.target.equals(ego.position));
+    const projected=ego.position.clone().project(camera);
+    assert.ok(Math.abs(projected.x)<1e-9&&Math.abs(projected.y)<1e-9);
+    assert.ok(camera.position.z>ego.position.z);
+  }
+  // A ground change moves the camera and pivot together, not the orbit offset.
+  const offset=camera.position.clone().sub(controls.target);
+  followEgoHeight(camera,controls,ego,-1.15);
+  assert.ok(controls.target.equals(ego.position));
+  assert.ok(camera.position.clone().sub(controls.target).distanceTo(offset)<1e-9);
+  controls.target.x+=2;camera.position.x+=2;
+  followEgoHeight(camera,controls,ego,-.9);
+  assert.equal(controls.target.x,2,'intentional user pan is preserved');
+  centerOrbit(camera,controls,ego,false);
+  assert.ok(controls.target.equals(ego.position),'reset removes the user pan');
+});
+
+test('optional local McQueen mesh preserves dimensions, UVs, heading and tyre contact',t=>{
+  const file=path.join(root,'viewer/scene-style/assets/ego-mcqueen.mesh.js');
+  if(!fs.existsSync(file)){t.skip('User-provided character mesh is intentionally not published');return;}
+  const asset=JSON.parse(fs.readFileSync(file,'utf8').replace(/^export default /,'').replace(/;\s*$/,''));
+  assert.equal(asset.schema,2);assert.equal(asset.wheels_included,true);assert.equal(asset.character_details_included,true);
+  assert.equal(asset.dimensions_m[0],4.5);assert.ok(asset.dimensions_m[1]>2&&asset.dimensions_m[1]<2.5);assert.ok(asset.dimensions_m[2]>1.3&&asset.dimensions_m[2]<1.7);
+  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];let eyeX=0,eyeCount=0,tyreZ=Infinity;
+  for(const part of asset.parts) {
+    const p=Buffer.from(part.position,'base64'),n=Buffer.from(part.normal,'base64'),uv=Buffer.from(part.uv,'base64');
+    assert.equal(p.length,n.length);assert.equal(p.length%36,0);assert.equal(uv.length,p.length/3*2);
+    for(let i=0;i<p.length;i+=12) {
+      for(let j=0;j<3;j++){const v=p.readFloatLE(i+j*4);assert.ok(Number.isFinite(v));lo[j]=Math.min(lo[j],v);hi[j]=Math.max(hi[j],v);assert.ok(Number.isFinite(n.readFloatLE(i+j*4)));}
+      if(part.material==='mcqueen-eyes'){eyeX+=p.readFloatLE(i);eyeCount++;}
+      if(part.material==='mcqueen-tires')tyreZ=Math.min(tyreZ,p.readFloatLE(i+8));
+    }
+    for(let i=0;i<uv.length;i+=4)assert.ok(Number.isFinite(uv.readFloatLE(i)));
+    assert.ok(asset.materials[part.material]);
+  }
+  lo.forEach(v=>assert.ok(Math.abs(v+.5)<1e-6));hi.forEach(v=>assert.ok(Math.abs(v-.5)<1e-6));
+  assert.ok(eyeX/eyeCount>.05,'face is on the forward (+X) half');
+  assert.ok(Math.abs(tyreZ+.5)<1e-6,'the tyres define the ground-contact plane');
+  const ground=-1.5,centreZ=ground+asset.dimensions_m[2]/2;
+  assert.ok(Math.abs(centreZ+tyreZ*asset.dimensions_m[2]-ground)<1e-6);
+  assert.match(asset.license,/local preview/);
+  assert.equal(asset.materials['mcqueen-tires'].map,'tires');
+  assert.deepEqual(fs.readFileSync(file),fs.readFileSync(path.join(root,'website/replay/scene-style/assets/ego-mcqueen.mesh.js')));
 });
 
 test('actual Three.js surface meshes triangulate holes and dispose frame geometry',async()=>{

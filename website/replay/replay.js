@@ -1,11 +1,12 @@
 import {assetPath, visibleObjects, projectBox, frameDelay, clamp} from './math.mjs';
-import {SceneRenderer,prepareVehicleAssets} from './scene-renderer.js?v=20260915';
+import {SceneRenderer,prepareVehicleAssets} from './scene-renderer.js?v=20260915b';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const dataRoot=new URL('./recording/',import.meta.url);
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const names=['Front','Front left','Front right','Back','Back left','Back right'];
+const characterPreview=['localhost','127.0.0.1'].includes(location.hostname)&&new URLSearchParams(location.search).get('ego')==='mcqueen';
 let metadata=null,frame=null,currentIndex=0,requestedIndex=0,cameraIndex=0,selected=-1;
 let renderer=null,playing=false,loading=false,timer=0,scrubTimer=0,serial=0,request=null,embeddedVisible=true;
 const cache=new Map(),cameraButtons=[];
@@ -168,7 +169,7 @@ function provenance() {
     '<ul>'+data.limitations.map(item=>'<li>'+escape(item)+'</li>').join('')+'</ul>'+
     '<p>'+link(data.attribution.url,data.attribution.dataset)+'. '+escape(data.attribution.paper)+'</p>'+
     '<p>'+link(data.attribution.license_url,data.attribution.license)+'; '+link(data.attribution.terms,'dataset terms')+'. '+escape(data.attribution.changes)+'</p>'+
-    '<p>'+escape(data.attribution.endorsement)+' Vehicle meshes adapted in Blender from Quaternius and Kenney CC0 assets; original character details and contour surfaces are presentation only. '+link('./scene-style/assets/ASSET-SOURCES.txt','Vehicle sources and licenses')+'. Three.js and OrbitControls are MIT-licensed. '+link('./vendor/THREE-LICENSE.txt','Three.js license')+
+    '<p>'+escape(data.attribution.endorsement)+(characterPreview?' Traffic uses Quaternius CC0 geometry. The ego car is a user-supplied McQueen model with no license supplied, for local preview only.':' Vehicle meshes adapted in Blender from Quaternius and Kenney CC0 assets; original character details and contour surfaces are presentation only.')+' '+link('./scene-style/assets/ASSET-SOURCES.txt','Public vehicle sources and licenses')+'. Three.js and OrbitControls are MIT-licensed. '+link('./vendor/THREE-LICENSE.txt','Three.js license')+
     '. '+link('./recording/asset-integrity.json','Asset hashes')+'.</p>';
 }
 async function init() {
@@ -188,7 +189,8 @@ async function init() {
       button.onclick=()=>{cameraIndex=index;updateCamera();};
       $('camera-tabs').append(button);cameraButtons.push(button);
     });
-    try {await prepareVehicleAssets();renderer=new SceneRenderer($('viewport'),chooseObject);}catch(problem){$('webgl-error').hidden=false;console.warn('3D viewer unavailable:',problem.message);}
+    try {await prepareVehicleAssets({egoAsset:characterPreview?'ego-mcqueen':'ego-racer'});renderer=new SceneRenderer($('viewport'),chooseObject);}catch(problem){$('webgl-error').hidden=false;console.warn('3D viewer unavailable:',problem.message);}
+    if(characterPreview)$('model-note').textContent+=' · User-provided McQueen local preview (license not supplied)';
     if(embeddedVisible && !document.hidden)await loadFrame(0);
   } catch(problem) {error(problem.message);$('load-status').textContent='Replay could not initialize.';}
 }

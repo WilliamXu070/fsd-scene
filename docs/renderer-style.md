@@ -25,7 +25,17 @@ The input asset files and editable output scenes remain under ignored `artifacts
 & 'C:/Program Files/Blender Foundation/Blender 5.1/blender.exe' --background --factory-startup --python scripts/build_viewer_vehicle_assets.py -- --source 'artifacts/renderer-polish/kenney-car-kit/Models/GLB format/sedan-sports.glb' --output artifacts/renderer-polish/vehicle-build --name ego-racer
 ```
 
-Review generated `.blend` scenes before copying their selected `.mesh.js` geometry modules to `viewer/scene-style/assets/`. Run `.venv/Scripts/python.exe scripts/sync_scene_style.py` to mirror the seven allowlisted files into `website/replay/scene-style/`. The static modules work with the existing local server's JavaScript allowlist, without changing the replay API or restarting training services. No ML model/checkpoint is copied. All mesh/road changes should be made in the canonical local modules, not just the Pages copy.
+Review generated `.blend` scenes before copying their selected `.mesh.js` geometry modules to `viewer/scene-style/assets/`. Run `.venv/Scripts/python.exe scripts/sync_scene_style.py` to mirror the eight allowlisted files into `website/replay/scene-style/`. The static modules work with the existing local server's JavaScript allowlist, without changing the replay API or restarting training services. No ML model/checkpoint is copied. All mesh/road changes should be made in the canonical local modules, not just the Pages copy.
+
+## Ego pivot and optional local character
+
+`orbit-frame.js` centres perspective/top/reset on the ego mesh bounding-box centre, replacing the previous target eight metres ahead. Ground changes translate camera and target together, preserving deliberate user pan. Reset restores the ego pivot.
+
+The user supplied `lightning-mcqueen.zip` containing a Blender scene and textures, but no redistribution license. Its derived mesh is explicitly ignored in both viewer directories and excluded from the sync allowlist. Public/default views retain the CC0 ego. Only localhost previews opt in using `?ego=mcqueen`; no download of the unlicensed mesh is attempted by public URLs.
+
+The local character retains the original body, eye and tyre textures. Blender runs with `--disable-autoexec`, evaluates the rest pose without source lights/cameras, aligns the long axis toward the eyes to +X, and normalizes the centred geometry. Uniform physical scaling preserves the original proportions at 4.5 × 2.2804 × 1.5084 m (11,025 triangles). Tyre bottoms sit on the model ground plane. Schema 2 stores UVs, embedded texture data and physical dimensions; schema 1 remains supported for public CC0 assets. No detected vehicle size/yaw is changed.
+
+Rebuild the local asset with `scripts/build_mcqueen_asset.py` using Blender's `--background --factory-startup --disable-autoexec` flags and the supplied scene, then `--python scripts/build_mcqueen_asset.py -- --textures <extracted-textures> --output <ignored-build-directory>`. Copy only the resulting `ego-mcqueen.mesh.js` into the two ignored `scene-style/assets/` paths for local preview. Public redistribution remains pending the source page/license or explicit rights confirmation.
 
 ## Verification
 

@@ -16,17 +16,35 @@ const materials={
 };
 const cylinder=new THREE.CylinderGeometry(1,1,1,32),sphere=new THREE.SphereGeometry(1,20,12);
 let ready;
-export function prepareVehicleAssets() {
+export function prepareVehicleAssets({egoAsset='ego-racer'}={}) {
   return ready??=Promise.all(['traffic-sedan','ego-racer'].map(async name=>{
-    const {default:asset}=await import('./assets/'+name+'.mesh.js');
-    if(asset.schema!==1||!Array.isArray(asset.parts))throw new Error('Unsupported vehicle mesh');
+    const {default:asset}=await import('./assets/'+(name==='ego-racer'?egoAsset:name)+'.mesh.js');
+    if(![1,2].includes(asset.schema)||!Array.isArray(asset.parts))throw new Error('Unsupported vehicle mesh');
+    const customMaterials={};
+    if(asset.schema===2) {
+      const textures={};
+      await Promise.all(Object.entries(asset.textures||{}).map(async([key,url])=>{
+        if(!/^data:image\/(png|jpeg);base64,/.test(url))throw new Error('Unsupported embedded vehicle texture');
+        const texture=await new THREE.TextureLoader().loadAsync(url);texture.colorSpace=THREE.SRGBColorSpace;
+        texture.anisotropy=4;textures[key]=texture;
+      }));
+      for(const [key,{map,...properties}] of Object.entries(asset.materials||{})) {
+        if(map&&!textures[map])throw new Error('Missing vehicle texture');
+        customMaterials[key]=new THREE.MeshPhysicalMaterial({...properties,map:map?textures[map]:null});
+      }
+    }
     const parts=asset.parts.map(part=>{
       const decode=value=>{const bytes=Uint8Array.from(atob(value),c=>c.charCodeAt(0));return new Float32Array(bytes.buffer);};
       const position=decode(part.position),normal=decode(part.normal);
-      if(position.length!==normal.length||position.length%9||!position.every(Number.isFinite)||!normal.every(Number.isFinite)||!materials[part.material])throw new Error('Invalid vehicle geometry');
+      const material=customMaterials[part.material]||materials[part.material];
+      if(position.length!==normal.length||position.length%9||!position.every(Number.isFinite)||!normal.every(Number.isFinite)||!material)throw new Error('Invalid vehicle geometry');
       const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(position,3));geometry.setAttribute('normal',new THREE.BufferAttribute(normal,3));geometry.computeBoundingSphere();
-      return {geometry,material:part.material};
-    });templates.set(name,{parts,wheelsIncluded:asset.wheels_included===true});
+      if(part.uv) {const uv=decode(part.uv);if(uv.length!==position.length/3*2||!uv.every(Number.isFinite))throw new Error('Invalid vehicle UVs');geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));}
+      return {geometry,material:part.material,resolvedMaterial:material};
+    });
+    const dimensions=asset.dimensions_m||[4.5,1.85,1.5];
+    if(dimensions.length!==3||!dimensions.every(v=>Number.isFinite(v)&&v>0&&v<10))throw new Error('Invalid ego dimensions');
+    templates.set(name,{parts,wheelsIncluded:asset.wheels_included===true,detailsIncluded:asset.character_details_included===true,dimensions});
   }));
 }
 
@@ -37,14 +55,15 @@ function piece(group,geometry,material,scale,position) {
 export function createVehicle(ego=false) {
   const group=new THREE.Group(),asset=templates.get(ego?'ego-racer':'traffic-sedan'),parts=asset?.parts;
   if(!parts)throw new Error('Load the vehicle assets before constructing the scene');
-  for(const part of parts)piece(group,part.geometry,ego&&part.material==='body'?materials.red:materials[part.material],[1,1,1],[0,0,0]);
+  group.userData.dimensions=asset.dimensions;
+  for(const part of parts)piece(group,part.geometry,ego&&part.material==='body'?materials.red:part.resolvedMaterial,[1,1,1],[0,0,0]);
   // Round wheels replace the angular source wheels. The detection box, not the
   // display mesh, remains authoritative for projected geometry and inspection.
   if(!asset.wheelsIncluded)for(const x of [-.28,.255])for(const y of [-.43,.43]) {
     piece(group,cylinder,materials.tire,[.087,.11,.22],[x,y,-.28]);
     piece(group,cylinder,materials.metal,[.057,.114,.15],[x,y,-.28]);
   }
-  if(ego) {
+  if(ego&&!asset.detailsIncluded) {
     // Original character treatment, not a redistributed Disney/Pixar asset.
     // Windshield eyes face +X and are readable when orbiting to the front.
     for(const y of [-.14,.14]) {

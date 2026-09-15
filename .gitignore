@@ -19,3 +19,6 @@ __pycache__/
 *.pickle
 *.log
 .playwright-mcp/
+# User-provided character asset: no redistribution license supplied.
+viewer/scene-style/assets/ego-mcqueen.mesh.js
+website/replay/scene-style/assets/ego-mcqueen.mesh.js
