@@ -1,0 +1,17 @@
+Recorded replay media and derived scene data
+
+Source dataset: nuScenes, Motional.
+License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0,
+subject to the nuScenes Dataset Terms.
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+https://www.nuscenes.org/terms-of-use
+
+Citation: Caesar et al., "nuScenes: A multimodal dataset for autonomous
+driving," CVPR 2020. https://www.nuscenes.org/nuscenes
+
+Changes: the existing model preparation pipeline resized camera images to
+704x256. This package preserves those processed image bytes. Predictions
+and projected cuboid overlays are derived research visualizations.
+
+No affiliation with or endorsement by Motional is implied. This license
+notice covers the recording folder, not the separately licensed viewer code.

@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="An attempt to understand, build, train, and optimize a camera-based 3D scene perception model from first principles.">
   <title>Building a 3D Driving Scene: the why and how</title>
-  <link rel="stylesheet" href="style.css?v=report-20260914">
+  <link rel="stylesheet" href="style.css?v=report-20260914-replay">
   <link rel="stylesheet" href="animations.css?v=animations-20260914">
   <script src="app.js" defer></script>
   <script src="animations.js?v=animations-20260914" defer></script>
+  <script src="replay-embed.js?v=20260914" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to article</a>
@@ -271,6 +272,10 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           </div>
           <p>These are project-specific metrics from the preserved KITTI-360 held-out drive, not official benchmark leaderboard results. The pedestrian result in particular was inadequate. The replay also exposed implausible vehicle clusters, overlapping boxes, coarse road boundaries, and unstable arrangements between adjacent frames.</p>
           <aside class="note"><p><strong>Key insight</strong> — Getting the entire pipeline to run did not mean that the model could perceive reliably.</p></aside>
+          <figure class="model-replay-surface" id="current-model-replay">
+            <figcaption><strong>Current retained model: recorded nuScenes replay</strong><p>Explore the epoch-18 Stage A checkpoint with synchronized camera inputs, predicted 3D geometry, and calibrated image projections. This is a separate six-camera experiment from the KITTI-360 results above. The newer experimental branches have not replaced this retained checkpoint.</p><a href="replay/" target="_blank" rel="noopener">Open the full interactive viewer</a></figcaption>
+            <iframe data-model-replay src="replay/" title="Recorded nuScenes epoch-18 model: six camera inputs and interactive 3D predictions" loading="lazy" allow="fullscreen" referrerpolicy="same-origin"></iframe>
+          </figure>
           <figure class="animation-figure figure-wide" data-animation="evidence">
             <span class="figure-label">Synthetic diagnostic viewer</span>
             <strong>Inspect how a scene can contain false positives and missed objects.</strong>

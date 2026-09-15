@@ -1,0 +1,2 @@
+# Integrity hashes must match on Windows, Linux and the deployed Pages artifact.
+*.json text eol=lf

@@ -30,4 +30,6 @@ Use `<figure class="media-surface">` with an image and caption for embedded medi
 
 Push website edits to `main` to deploy through `.github/workflows/deploy-pages.yml`. Only `website/` is published. Keep source-report snapshots, imports, and verification outputs in the ignored `artifacts/website-content/` directory.
 
+The real model player in Results is separate from the eight synthetic teaching figures. `replay/` contains the static six-camera epoch-18 nuScenes viewer and a small, explicitly attributed recording; see `replay/README.md` for provenance, controls, tests and replacement instructions. `replay-embed.js` sizes the iframe and pauses it offscreen. Only its reviewed `recording/` subset is public; the global data/artifact/model exclusions remain unchanged.
+
 Desktop uses a sticky chapter index; small screens use an expandable contents menu. Keyboard focus, skip navigation, reduced-motion and print styling are included. Training remains stopped.

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Recorded model replay · FSD research</title>
+  <link rel="stylesheet" href="replay.css?v=20260914">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <script type="module" src="replay.js?v=20260914"></script>
+</head>
+<body>
+<main class="replay">
+  <header>
+    <div><h1 id="model-title">Recorded model replay</h1><p id="model-note">Loading the pinned checkpoint’s replay…</p></div>
+    <a class="full-view" href="./" target="_blank" rel="noopener">Open full viewer</a>
+  </header>
+  <p class="notice">Actual model predictions · recorded inputs · no live inference. This nuScenes run is separate from the earlier KITTI-360 results in the article.</p>
+  <div class="viewer-grid">
+    <section class="scene" aria-label="Predicted 3D scene">
+      <div id="viewport" tabindex="0" role="img" aria-label="Interactive 3D prediction. Drag to orbit, scroll to zoom; use the view buttons for fixed views."></div>
+      <div class="scene-controls" role="group" aria-label="3D camera view">
+        <button id="perspective" aria-pressed="true">Perspective</button>
+        <button id="topdown" aria-pressed="false">Top view</button>
+        <button id="reset-view">Reset view</button>
+      </div>
+      <div class="scene-bottom"><p>Drag to orbit · scroll to zoom · click an object to inspect</p><div class="legend"><span><i class="road"></i>Road</span><span><i class="sidewalk"></i>Sidewalk</span><span><i class="other"></i>Other ground</span><span><i class="person"></i>Person</span></div></div>
+      <p id="webgl-error" class="webgl-error" hidden>3D rendering is unavailable in this browser. Camera playback and object values still work; try a browser with WebGL enabled.</p>
+    </section>
+    <section class="cameras" aria-label="Synchronized camera views">
+      <div class="camera-heading"><h2 id="camera-name">Camera</h2><span id="camera-count">Six synchronized views</span></div>
+      <div class="camera-large"><img id="camera-image" alt="Selected recorded camera input"><svg id="projection" viewBox="0 0 704 256" role="img" aria-label="Predicted 3D cuboids projected into the selected camera"></svg><span id="camera-loading">Loading camera inputs…</span></div>
+      <div id="camera-tabs" class="camera-tabs" role="group" aria-label="Select a camera"></div>
+      <label class="check"><input type="checkbox" id="overlay" checked> Project predicted boxes into the image</label>
+      <p class="camera-note">Car overlays are teal; pedestrians are orange. These are predicted cuboids, not annotations or object silhouettes.</p>
+    </section>
+  </div>
+  <div id="load-status" role="status" aria-live="polite">Loading the first synchronized frame…</div>
+  <div id="error" role="alert" hidden></div>
+  <div class="transport" role="group" aria-label="Recorded replay controls">
+    <div class="play-buttons"><button id="previous" aria-label="Previous recorded frame" disabled>‹</button><button id="play" disabled>Play replay</button><button id="next" aria-label="Next recorded frame" disabled>›</button></div>
+    <div class="timeline"><div><label for="scrubber" id="frame-counter">Replay frame</label><output id="timestamp" for="scrubber">—</output></div><input id="scrubber" aria-label="Recorded replay frame" type="range" min="0" max="0" value="0" disabled></div>
+    <label class="speed">Speed<select id="speed"><option value=".5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label>
+  </div>
+  <div class="inspection">
+    <label class="confidence" for="confidence">Object confidence <output id="confidence-value" for="confidence">0.55</output><input id="confidence" aria-label="Object confidence" type="range" min="0.01" max="1" step=".01" value=".55"></label>
+    <div class="inspection-tools"><label class="check"><input id="grid" type="checkbox"> Metric grid</label><label class="check"><input id="boxes" type="checkbox"> 3D box outlines</label><span id="object-count">No frame loaded</span></div>
+    <label class="object-label" for="object-select">Inspect a prediction</label><select id="object-select"><option value="-1">Select an object</option></select>
+    <p id="object-details">Choose an object to see its class, confidence, position, dimensions and yaw.</p>
+  </div>
+  <details id="provenance">
+    <summary>Checkpoint, clip selection, limitations and attribution</summary>
+    <div id="provenance-body"></div>
+  </details>
+  <p class="footer-note">The dark reference vehicle is a fixed graphic. Road colours, cars and pedestrians come from the model. Playback uses approximately 2 Hz recorded keyframes; replay speed is not inference throughput.</p>
+</main>
+</body>
+</html>

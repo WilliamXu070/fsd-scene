@@ -93,3 +93,11 @@ summary::marker { color:var(--blue); }
 .code-surface code { font:inherit; }
 article h4 { margin:28px 0 14px; font-size:20px; font-weight:500; line-height:1.35; }
 @media print { .code-surface pre { white-space:pre-wrap; overflow-wrap:anywhere; } }
+
+/* The real model player is isolated; existing article layout stays unchanged. */
+.model-replay-surface { margin:34px 0; min-width:0; border:1px solid var(--rule); background:#fff; }
+.model-replay-surface > figcaption { padding:17px 20px; font:13px/1.6 system-ui,sans-serif; color:#53616a; border-bottom:1px solid #d9dfe3; }
+.model-replay-surface > figcaption strong { display:block; margin-bottom:7px; color:var(--ink); font-size:16px; }
+.model-replay-surface > figcaption p { margin:0 0 8px; }
+.model-replay-surface iframe { width:100%; height:1040px; display:block; border:0; }
+@media print { .model-replay-surface iframe { display:none; } }
