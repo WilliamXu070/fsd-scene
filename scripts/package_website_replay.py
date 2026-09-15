@@ -164,12 +164,15 @@ def package(export: Path, config: Path, output: Path, expected_checkpoint: str, 
         write_json(frame_path, frame)
         assets.append({"file": frame_path.relative_to(output).as_posix(), "sha256": sha256(frame_path), "bytes": frame_path.stat().st_size})
         frame_index.append({"file": frame_path.relative_to(output).as_posix(), "timestamp": record["timestamp"], "sequence": record["sequence"], "scene_name": row["scene_name"], "source_frame": record["frame_id"]})
+    split_label = "training" if metadata["split"] == "train" else "validation"
+    selected_scenes = metadata.get("scene_selection", {}).get("scenes", [])
+    scene_suffix = f" from {selected_scenes[0]}" if len(selected_scenes) == 1 else ""
     public = {
         "schema_version": 1, "model": model_label, "dataset": "nuScenes v1.0-trainval",
         "split": metadata["split"], "checkpoint_sha256": identity["checkpoint_sha256"],
         "source_export_sha256": sha256(export / "scenes.jsonl"),
         "source_manifest_sha256": identity["manifest_sha256"],
-        "selection": "First 40 chronological validation keyframes, selected before inspecting predictions.",
+        "selection": f"First {len(records)} chronological {split_label} keyframes{scene_suffix}, selected before inspecting predictions.",
         "runtime": metadata["runtime_backend"], "refinement_enabled": bool(metadata["refine"]),
         "cameras": metadata["camera_names"], "frames": frame_index,
         "bev_min": metadata["bev_min"], "bev_step": metadata["bev_step"], "ground_z": metadata["ground_z"],
@@ -177,6 +180,7 @@ def package(export: Path, config: Path, output: Path, expected_checkpoint: str, 
         "bytes": sum(asset["bytes"] for asset in assets),
         "limitations": [
             "Recorded checkpoint predictions, not live browser inference.",
+            *( ["This sequence belongs to the model's training split; it illustrates fitted behaviour and cannot measure generalization."] if metadata["split"] == "train" else [] ),
             "Stage A only; spatial/temporal refinement is bypassed.",
             "Pedestrian detection and scene reconstruction remain unreliable.",
             "This clip illustrates behaviour; it is not a benchmark or a representative accuracy sample.",

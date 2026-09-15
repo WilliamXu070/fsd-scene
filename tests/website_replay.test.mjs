@@ -46,11 +46,14 @@ test('confidence filtering never invents or changes a box',()=>{
   assert.equal(visibleObjects(frame,.55).length,1);
   assert.strictEqual(visibleObjects(frame,.55)[0].box,frame.boxes[0]);
 });
-test('public clip contains 40 current-checkpoint frames and 240 unchanged camera assets',()=>{
+test('public clip contains 40 current-checkpoint training frames and 240 verified camera assets',()=>{
   const metadata=JSON.parse(fs.readFileSync(path.join(recording,'manifest.json'),'utf8'));
   assert.equal(metadata.checkpoint_sha256,'28d570f3688ce1dd0b2f52c59ae92568abfb1a0ca634147642e5c88139013b50');
   assert.equal(metadata.frames.length,40);assert.equal(metadata.cameras.length,6);
-  assert.equal(metadata.refinement_enabled,false);assert.equal(metadata.split,'val');
+  assert.equal(metadata.refinement_enabled,false);assert.equal(metadata.split,'train');
+  assert.deepEqual([...new Set(metadata.frames.map(frame=>frame.scene_name))],['scene-0001']);
+  assert.match(metadata.selection,/training keyframes from scene-0001/);
+  assert.ok(metadata.limitations.some(item=>/cannot measure generalization/.test(item)));
   const inventory=JSON.parse(fs.readFileSync(path.join(recording,'asset-integrity.json'),'utf8'));
   assert.equal(inventory.assets.filter(a=>a.file.startsWith('images/')).length,240);
   let total=0;

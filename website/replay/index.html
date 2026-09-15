@@ -6,7 +6,7 @@
   <title>Recorded model replay · FSD research</title>
   <link rel="stylesheet" href="replay.css?v=20260915">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-  <script type="module" src="replay.js?v=20260915b"></script>
+  <script type="module" src="replay.js?v=20260915c"></script>
 </head>
 <body>
 <main class="replay">
@@ -14,7 +14,7 @@
     <div><h1 id="model-title">Recorded model replay</h1><p id="model-note">Loading the pinned checkpoint’s replay…</p></div>
     <a class="full-view" href="./" target="_blank" rel="noopener">Open full viewer</a>
   </header>
-  <p class="notice">Actual model predictions · recorded inputs · no live inference. This nuScenes run is separate from the earlier KITTI-360 results in the article.</p>
+  <p class="notice" id="replay-notice">Actual model predictions · recorded inputs · no live inference. This nuScenes run is separate from the earlier KITTI-360 results in the article.</p>
   <div class="viewer-grid">
     <section class="scene" aria-label="Predicted 3D scene">
       <div id="viewport" tabindex="0" role="img" aria-label="Interactive 3D prediction. Drag to orbit, scroll to zoom; use the view buttons for fixed views."></div>

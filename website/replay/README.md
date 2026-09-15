@@ -14,7 +14,7 @@ Canonical render components live in `viewer/scene-style/`; run `scripts/sync_sce
 
 - Retained nuScenes epoch 18, Stage A. Spatial/temporal refinement is bypassed; newer experiment branches are not adopted.
 - Checkpoint SHA256: `28d570f3688ce1dd0b2f52c59ae92568abfb1a0ca634147642e5c88139013b50`.
-- First 40 chronological validation keyframes, all from scene-0003, chosen before inspecting predictions. Six images per frame, copied byte-for-byte from the model's prepared inputs. About 19.5 seconds of source time; roughly 14.4 MiB for the full recording.
+- First 40 chronological training-split keyframes, the complete scene-0001, chosen before inspecting predictions. Six images per frame are copied byte-for-byte from the model's prepared inputs. The sequence spans about 19.5 seconds. Because it was used for training, this replay illustrates fitted behaviour and cannot measure generalization.
 - Boxes, confidence, class, track ID and road output are actual checkpoint predictions. Road display RLE is lossless relative to the existing renderer's predicted confidence >=0.45 and calibration-FOV mask. It is not ground truth. Confidence 0.55 is the initial display filter; lower-scoring exported predictions remain available.
 - Camera projection uses each frame's intrinsic and camera-to-ego matrices, clips cuboid edges at the near plane and image boundary, and does not assume a visible silhouette. Ground-truth arrays never enter the public recording.
 - The earlier article metrics describe KITTI-360. This clip does not update those results or establish a new benchmark. Pedestrian detection and scene reconstruction remain unreliable.
@@ -23,12 +23,12 @@ Metadata and image/frame SHA256 checks are in `recording/manifest.json` and `rec
 
 ## Reproduce or replace deliberately
 
-The retained local prediction export is `artifacts/website-replay/nuscenes-epoch18-export/`. It was generated using the existing `experiments/nuscenes/export_replay.py` with the retained checkpoint/configuration, `--limit 40`, and an explicit diagnostic note. No training was started or modified. The export remains ignored; only the allowlisted public recording is committed.
+The retained local prediction export is `artifacts/website-replay/nuscenes-epoch18-train-scene-0001-export/`. It was generated using the existing `experiments/nuscenes/export_replay.py` with the retained checkpoint/configuration, `--split train --limit 40`, and an explicit diagnostic note. No training was started or modified. The export remains ignored; only the allowlisted public recording is committed.
 
 Package a completed export into a NEW review directory before replacing the public recording:
 
 ```powershell
-.venv/Scripts/python.exe scripts/package_website_replay.py --export artifacts/website-replay/nuscenes-epoch18-export --config experiments/nuscenes/artifacts/full-baseline/stage-a/config.json --output artifacts/website-replay/new-public-bundle --checkpoint-sha256 28d570f3688ce1dd0b2f52c59ae92568abfb1a0ca634147642e5c88139013b50 --model-label "nuScenes - retained epoch 18"
+.venv/Scripts/python.exe scripts/package_website_replay.py --export artifacts/website-replay/nuscenes-epoch18-train-scene-0001-export --config experiments/nuscenes/artifacts/full-baseline/stage-a/config.json --output artifacts/website-replay/new-training-public-bundle --checkpoint-sha256 28d570f3688ce1dd0b2f52c59ae92568abfb1a0ca634147642e5c88139013b50 --model-label "nuScenes - retained epoch 18 - training replay"
 ```
 
 The packager verifies the source export identity, dataset manifest, per-frame timestamp, image paths, calibration-cache hashes and byte-for-byte camera copies. It refuses to reuse an output directory. The public allowlist excludes model weights, optimizer state, labels/targets, raw LiDAR, absolute local paths and source authentication.

@@ -4,6 +4,7 @@ import {SceneRenderer,prepareVehicleAssets} from './scene-renderer.js?v=20260915
 const $=id=>document.getElementById(id);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const dataRoot=new URL('./recording/',import.meta.url);
+const recordingVersion='20260915-train';
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const names=['Front','Front left','Front right','Back','Back left','Back right'];
 const characterPreview=['localhost','127.0.0.1'].includes(location.hostname)&&new URLSearchParams(location.search).get('ego')==='mcqueen';
@@ -11,7 +12,7 @@ let metadata=null,frame=null,currentIndex=0,requestedIndex=0,cameraIndex=0,selec
 let renderer=null,playing=false,loading=false,timer=0,scrubTimer=0,serial=0,request=null,embeddedVisible=true;
 const cache=new Map(),cameraButtons=[];
 
-function assetURL(path) { return new URL(assetPath(path),dataRoot).href; }
+function assetURL(path) {const url=new URL(assetPath(path),dataRoot);url.searchParams.set('v',recordingVersion);return url.href;}
 function error(message) { $('error').textContent=message;$('error').hidden=!message; }
 function playLabel() {
   $('play').textContent=playing?'Pause':reduced.matches?'Step frame':currentIndex===metadata?.frames.length-1?'Replay':'Play replay';
@@ -163,7 +164,9 @@ function setView(top) {
 function provenance() {
   const data=metadata,link=(url,label)=>'<a href="'+escape(url)+'" target="_blank" rel="noopener">'+escape(label)+'</a>';
   $('model-title').textContent=data.model;
-  $('model-note').textContent=data.frames.length+' recorded validation keyframes · '+(data.bytes/1048576).toFixed(1)+' MiB full clip · Stage A, refinement off';
+  const splitLabel=data.split==='train'?'training-split':'validation';
+  $('model-note').textContent=data.frames.length+' recorded '+splitLabel+' keyframes · '+(data.bytes/1048576).toFixed(1)+' MiB full clip · Stage A, refinement off';
+  $('replay-notice').textContent='Actual model predictions on '+splitLabel+' inputs · recorded playback · no live inference. This nuScenes run is separate from the earlier KITTI-360 results in the article.';
   $('provenance-body').innerHTML='<p><strong>Checkpoint SHA256</strong><br><code>'+escape(data.checkpoint_sha256)+'</code></p>'+
     '<p>'+escape(data.selection)+' Source: '+escape(data.dataset)+'. The clip buffers before advancing if an image is not ready.</p>'+
     '<ul>'+data.limitations.map(item=>'<li>'+escape(item)+'</li>').join('')+'</ul>'+
@@ -174,7 +177,8 @@ function provenance() {
 }
 async function init() {
   try {
-    const response=await fetch(new URL('manifest.json',dataRoot));
+    const manifestURL=new URL('manifest.json',dataRoot);manifestURL.searchParams.set('v',recordingVersion);
+    const response=await fetch(manifestURL);
     if(!response.ok)throw new Error('Replay manifest unavailable. Reload to retry.');
     metadata=await response.json();
     if(metadata.schema_version!==1 || metadata.cameras.length!==6 || !metadata.frames.length)throw new Error('Unsupported replay manifest.');
