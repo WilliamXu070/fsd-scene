@@ -6,7 +6,9 @@
   <meta name="description" content="An attempt to understand, build, train, and optimize a camera-based 3D scene perception model from first principles.">
   <title>Building a 3D Driving Scene: the why and how</title>
   <link rel="stylesheet" href="style.css?v=report-20260914">
+  <link rel="stylesheet" href="animations.css?v=animations-20260914">
   <script src="app.js" defer></script>
+  <script src="animations.js?v=animations-20260914" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to article</a>
@@ -45,7 +47,7 @@
             <figcaption>Reference image from the report: the type of simplified driving scene I would like to generate.</figcaption>
           </figure>
           <p>I became interested in the potential for high-performance edge scene generation capabilities in real time. The goal is to adapt a similar model for 3D scene generation on consumer-accessible hardware, in real time. I.e., using standard cameras, with standard vehicles, pedestrians, lanes, roads, and road boundaries as the output.</p>
-          <figure class="figure-placeholder">
+          <figure class="animation-figure" data-animation="opening">
             <span class="figure-label">Opening animation</span>
             <strong>Camera observations become a simplified 3D scene.</strong>
             <figcaption>Multiple synchronized camera views enter from the left. Learned features, geometry, and object predictions progressively assemble into a bird’s-eye visualizer on the right.</figcaption>
@@ -69,7 +71,7 @@
           <p>At an extremely high level, we can reduce perception to data being input and data being output. For our scope, our only input modality is vision, which means that we will be required to infer the depth, orientation, and location of all objects with reference to the car, without any LiDAR information during inference. Thus, our model must be able to turn 2D projections into 3D semantic positioning in space.</p>
           <div class="equation" aria-label="Perception flow">Camera images → learned features → 3D geometry → scene predictions</div>
           <p>The main obstruction is that a camera records a two-dimensional projection. A pixel tells us that something exists along a direction leaving the camera, but it does not directly tell us how far away that thing is. Our model must therefore learn both <em>what</em> it sees and <em>where</em> that thing exists in a shared three-dimensional space.</p>
-          <figure class="figure-placeholder">
+          <figure class="animation-figure" data-animation="ray">
             <span class="figure-label">Interactive figure</span>
             <strong>One pixel corresponds to an entire 3D ray.</strong>
             <figcaption>A depth slider moves a point along the camera ray and shows how the same image coordinate can represent many possible physical locations.</figcaption>
@@ -212,10 +214,10 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           <p>A full 3D voxel volume describes height, width, and depth everywhere, including the majority of locations containing nothing useful. A BEV representation collapses most vertical structure and reasons over a two-dimensional ground plane. A sparse representation goes further and spends its computation on a limited collection of likely objects.</p>
           <p>Depending on the form in which we maintain our data, we can save a substantial amount of memory and computation. A dense feature volume stores <span class="math">X × Y × Z × C</span> values. A BEV grid stores <span class="math">X × Y × C</span>, while an image feature map stores <span class="math">H × W × C</span> per camera. A sparse object representation stores a limited number of feature vectors and their geometry. The spatial meaning of these axes is different, even when two representations contain the same number of values.</p>
           <p>As an illustration, 160 × 160 cells with 64 channels contain 1,638,400 values. Adding 16 explicit height layers gives 26,214,400 values, or sixteen times as many. This counts feature values only; it is not a measured runtime speedup. BEV sacrifices explicit vertical separation, while sparse objects omit much of the surrounding surface detail. My big learning here was that representation is a major tradeoff.</p>
-          <figure class="figure-placeholder figure-wide">
+          <figure class="animation-figure figure-wide" data-animation="representation">
             <span class="figure-label">Comparison animation</span>
             <strong>The same scene represented as voxels, BEV cells, and sparse objects.</strong>
-            <figcaption>A compute counter increases as the representation becomes denser. Selecting each representation reveals the information retained and discarded.</figcaption>
+            <figcaption>A feature-storage counter increases as the representation becomes denser. Selecting each representation reveals the information retained and discarded. These counts are illustrative, not measured runtime speedups.</figcaption>
           </figure>
           <h4>Refinement of prediction</h4>
           <p>Spatial sampling gives a proposal more evidence from the current images. Temporal sampling gives it evidence from earlier observations. The loss then compares the result with supervision, and backpropagation changes the weights along the available paths. Designing the architecture means making useful evidence available at the point where it can improve the prediction, while keeping the cost of those paths manageable.</p>
@@ -236,7 +238,7 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           <p>The object head predicted a centre, vertical position, dimensions, confidence, and yaw. The strongest 200 proposals could enter refinement, after which at most 100 detections were retained.</p>
           <p>This follows the sequence in my initial outline: an ImageNet-pretrained ResNet-50, FPN, BEV projection, pooling and detection, followed by attention. “Looping attention” describes the refinement idea; the implemented baseline uses one spatial-and-temporal block, with detached history passed between observations. Repeated within-frame refinement would require a separate architecture change.</p>
           <p>The tensor shapes, pooling rule, and refinement steps above can be traced in <a href="https://github.com/WilliamXu070/fsd-scene/blob/main/src/fsd/model.py">the model implementation</a> and <a href="https://github.com/WilliamXu070/fsd-scene/blob/main/configs/baseline.yaml">the baseline configuration</a>.</p>
-          <figure class="figure-placeholder figure-wide">
+          <figure class="animation-figure figure-wide" data-animation="architecture">
             <span class="figure-label">Step-through architecture</span>
             <strong>Trace one car from image pixels to its final oriented box.</strong>
             <figcaption>Each step exposes the current tensor dimensions, coordinate system, retained information, and dominant computational cost.</figcaption>
@@ -250,10 +252,10 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           <p>Our loss combined depth, road classification, object-centre, box geometry, and circular yaw errors. In effect, we were attempting to give the model the data and comparison functions required to make a better prediction.</p>
           <div class="equation equation-small" aria-label="Combined loss equation">ℒ = λ<sub>d</sub>ℒ<sub>depth</sub> + λ<sub>r</sub>ℒ<sub>road</sub> + λ<sub>c</sub>ℒ<sub>centre</sub> + λ<sub>g</sub>ℒ<sub>geometry</sub> + λ<sub>y</sub>ℒ<sub>yaw</sub></div>
           <p>We first attempted to overfit sixteen scenes. This was not evidence that the model generalized; it was a mechanical test that the images, labels, loss, gradients, and optimizer could work together. Only unseen validation and sealed testing could measure whether it had learned a useful pattern.</p>
-          <figure class="figure-placeholder">
+          <figure class="animation-figure" data-animation="training">
             <span class="figure-label">Training-loop animation</span>
             <strong>Forward pass, loss, backpropagation, and weight update.</strong>
-            <figcaption>Selecting a loss term highlights the exact prediction it supervises and the path its gradient follows backward through the architecture.</figcaption>
+            <figcaption>Selecting a loss term highlights the prediction it supervises and its main gradient route. A separate scalar example demonstrates the weight update; it is not a recorded training run.</figcaption>
           </figure>
         </section>
 
@@ -269,10 +271,10 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           </div>
           <p>These are project-specific metrics from the preserved KITTI-360 held-out drive, not official benchmark leaderboard results. The pedestrian result in particular was inadequate. The replay also exposed implausible vehicle clusters, overlapping boxes, coarse road boundaries, and unstable arrangements between adjacent frames.</p>
           <aside class="note"><p><strong>Key insight</strong> — Getting the entire pipeline to run did not mean that the model could perceive reliably.</p></aside>
-          <figure class="figure-placeholder figure-wide">
-            <span class="figure-label">Evidence viewer</span>
-            <strong>Predicted scene beside the camera data that produced it.</strong>
-            <figcaption>A shared timestamp control shows the original camera images, predictions, optional ground-truth diagnostics, and the false positives or missed objects being discussed.</figcaption>
+          <figure class="animation-figure figure-wide" data-animation="evidence">
+            <span class="figure-label">Synthetic diagnostic viewer</span>
+            <strong>Inspect how a scene can contain false positives and missed objects.</strong>
+            <figcaption>A shared timestamp aligns an authored camera schematic with illustrative boxes and optional reference geometry. This synthetic example demonstrates diagnostic controls; it is not dataset imagery, checkpoint output, or evidence for the metrics above.</figcaption>
           </figure>
         </section>
 
@@ -281,7 +283,7 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           <p>The first architecture assumed that a sufficiently useful BEV feature map would naturally provide strong object geometry. In practice, depth errors produced incorrect BEV features, weak centre proposals, and boxes that the later refinement stage could not recover.</p>
           <p>This led me toward Sparse4Dv3 as a reference. Sparse in this context does not simply mean removing voxels. It means representing the scene with a limited collection of object hypotheses and concentrating expensive computation around them.</p>
           <p>On a separate 403-timestamp nuScenes diagnostic, a complete pretrained Sparse4Dv3 checkpoint achieved 57.46% car BEV AP50, compared with 25.45% for our preserved early six-camera nuScenes baseline. Its matched yaw error was also lower: 4.67° compared with 13.56°. This was not an equal training comparison, but it demonstrated the gap between our first proposal mechanism and a mature pretrained sparse detector.</p>
-          <figure class="figure-placeholder">
+          <figure class="animation-figure" data-animation="queries">
             <span class="figure-label">Object-query animation</span>
             <strong>Sparse hypotheses repeatedly sample useful image evidence.</strong>
             <figcaption>Each object stores position, dimensions, yaw, confidence, and learned features. Incorrect hypotheses fade while useful hypotheses move toward observed vehicles.</figcaption>
@@ -295,10 +297,10 @@ new_yaw = wrap_angle(old_yaw + delta.yaw)</code></pre>
           <p>The actual design problem is a balance:</p>
           <div class="equation" aria-label="Optimization tradeoff">Perception quality ↔ latency ↔ memory</div>
           <p>TensorRT can improve how the frozen model executes through lower precision, layer fusion, kernel selection, and memory planning. It does not improve what the model learned. The custom model’s depth pooling and rotated suppression require special attention because they cannot be treated as ordinary convolutional layers.</p>
-          <figure class="figure-placeholder">
+          <figure class="animation-figure" data-animation="latency">
             <span class="figure-label">Latency breakdown</span>
             <strong>Follow one frame through preprocessing, inference, suppression, tracking, and rendering.</strong>
-            <figcaption>A stacked timing bar distinguishes model-only GPU latency from complete fresh-scene latency and UI refresh.</figcaption>
+            <figcaption>A stacked timing bar shows measured GPU module timings. The pipeline view distinguishes cached processing from the unmeasured capture and display boundaries; it does not claim a complete camera-to-display latency.</figcaption>
           </figure>
         </section>
 

@@ -1,0 +1,53 @@
+/* Local figure surfaces only: the article grid and typography are unchanged. */
+.animation-figure { position:relative; min-width:0; margin:34px 0; padding:43px 22px 20px; border:1px solid #c8c2b6; background:#f7f5ef; text-align:left; contain:layout; overflow:hidden; }
+.animation-figure > strong { display:block; font-size:22px; font-weight:500; line-height:1.35; }
+.animation-figure > figcaption { margin:17px 0 0; color:#625e56; font:13px/1.55 system-ui,sans-serif; }
+.animation-figure .figure-label { color:#80512e; }
+.viz-root { margin-top:18px; font:13px/1.5 system-ui,sans-serif; color:#343b38; }
+.viz-options { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+.viz-options label { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.viz-options select { max-width:100%; min-height:36px; padding:5px 8px; color:inherit; background:#fffdf8; border:1px solid #aaa99e; border-radius:3px; font:inherit; }
+.viz-options input[type="checkbox"] { width:17px; height:17px; accent-color:#266c67; }
+.viz-options input[type="range"] { width:125px; max-width:100%; }
+.viz-root button { min-height:36px; padding:6px 11px; border:1px solid #aaa99e; border-radius:3px; background:#fffdf8; color:#343b38; font:inherit; cursor:pointer; }
+.viz-root button:hover { background:#e9eee7; }
+.viz-root button[aria-pressed="true"] { background:#266c67; border-color:#266c67; color:#fff; }
+.viz-root button:disabled { opacity:.45; cursor:default; }
+.viz-root :is(button,input,select):focus-visible { outline:2px solid #275e97; outline-offset:3px; }
+.viz-stage { min-width:0; border:1px solid #dedacf; background:#fcfbf6; border-radius:3px; overflow:hidden; }
+.viz-stage svg { display:block; width:100%; height:auto; font:12px system-ui,sans-serif; }
+.viz-stage text { fill:#343b38; }
+.viz-stage .viz-small { font-size:11px; }
+.viz-stage .viz-large { font-size:18px; font-weight:600; }
+.viz-readout { min-height:74px; padding:12px 0 9px; font-variant-numeric:tabular-nums; }
+.viz-readout p { margin:0 0 5px; }
+.viz-readout strong { font-weight:650; }
+.viz-readout dl { display:grid; grid-template-columns:auto 1fr; column-gap:12px; row-gap:4px; margin:0; }
+.viz-readout dt { color:#666358; }
+.viz-readout dd { margin:0; min-width:0; overflow-wrap:anywhere; }
+.viz-transport { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-top:10px; border-top:1px solid #dedacf; }
+.viz-transport .viz-play { min-width:72px; background:#266c67; border-color:#266c67; color:white; }
+.viz-seek { display:grid; grid-template-columns:1fr auto; width:100%; gap:4px 12px; align-items:center; }
+.viz-seek input { grid-column:1 / -1; width:100%; margin:4px 0; accent-color:#266c67; cursor:pointer; min-height:24px; }
+.viz-seek output { font-variant-numeric:tabular-nums; color:#625e56; }
+.viz-provenance { margin:12px 0 0; color:#625e56; font-size:11px; line-height:1.5; }
+.viz-provenance a { color:inherit; }
+.viz-key { display:flex; flex-wrap:wrap; gap:5px 14px; margin-bottom:7px; }
+.viz-key span::before { content:""; display:inline-block; width:9px; height:9px; margin-right:5px; background:var(--key); border-radius:2px; }
+.viz-fallback { padding:12px; border-left:2px solid #a56534; }
+/* The old wide placeholders overlapped the fixed chapter links. Keep the
+   interactive surfaces inside the unchanged article column. */
+@media(min-width:1100px) { .animation-figure.figure-wide { width:100%; margin-left:0; transform:none; } }
+@media(max-width:600px) {
+  .animation-figure { padding:40px 12px 16px; }
+  .animation-figure > strong { font-size:20px; }
+  .viz-root button { min-height:40px; padding:7px 9px; }
+  .viz-options { gap:7px; }
+  .viz-readout { min-height:94px; }
+  .viz-readout dl { grid-template-columns:1fr; gap:0; }
+  .viz-readout dd { margin-bottom:6px; }
+}
+@media print {
+  .animation-figure { break-inside:avoid; width:auto !important; margin-left:0 !important; transform:none !important; }
+  .viz-transport, .viz-options { display:none; }
+}
