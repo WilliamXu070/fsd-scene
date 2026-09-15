@@ -1,6 +1,14 @@
 # Recorded model viewer
 
-A static adaptation of the existing Three.js viewer. It uses the same procedural car/person meshes, road colours, metric axes, and orbit/top-view conventions. It adds synchronized image loading, camera selection, predicted-cuboid image projection, object inspection, on-demand rendering, and article embedding. There is no browser inference, server API, localhost dependency or training connection.
+A static adaptation of the existing Three.js viewer. Local and Pages views share the refined vehicle assets, contour surfaces, metric axes and orbit/top-view conventions. It adds synchronized image loading, camera selection, predicted-cuboid image projection, object inspection, on-demand rendering, and article embedding. There is no browser inference, server API, localhost dependency or training connection.
+
+## Output-rendering update
+
+The default view uses Blender-refined Quaternius CC0 sedan meshes, a Kenney-derived red character ego car, soft lighting, and filled road/non-road contour geometry. The shapes are display assets, not additional detected vehicle subtypes. Vehicle sources, licenses and modifications are in `scene-style/assets/ASSET-SOURCES.txt`.
+
+Road outlines are traced from exactly the same confident, visible grid cells. Two bounded local smoothing passes move each contour vertex by at most half a grid cell (0.25 m for this recording), preserving contour count and holes. No road components are removed, no temporal interpolation is added, and no lanes are invented. Sidewalk/other-ground are neutral non-road in the default view. **Original road grid** restores the exact old class colours and pixel cells for comparison. Unknown cells are not promoted to a known road class; boundary smoothing is a presentation approximation, not a model improvement. Predictions, calibration, image bytes and checkpoint remain unchanged.
+
+Canonical render components live in `viewer/scene-style/`; run `scripts/sync_scene_style.py` after edits to mirror their explicit public allowlist here. `scripts/build_viewer_vehicle_assets.py` rebuilds the selected meshes using installed Blender; editable `.blend` sources and downloaded packs stay under ignored local artifacts. Run `node --test tests/scene_style.test.mjs` for contour, mesh, disposal and mirror-integrity checks. See `docs/renderer-style.md` for exact reproduction commands.
 
 ## Pinned recording
 
@@ -11,7 +19,7 @@ A static adaptation of the existing Three.js viewer. It uses the same procedural
 - Camera projection uses each frame's intrinsic and camera-to-ego matrices, clips cuboid edges at the near plane and image boundary, and does not assume a visible silhouette. Ground-truth arrays never enter the public recording.
 - The earlier article metrics describe KITTI-360. This clip does not update those results or establish a new benchmark. Pedestrian detection and scene reconstruction remain unreliable.
 
-Metadata and image/frame SHA256 checks are in `recording/manifest.json` and `recording/asset-integrity.json`. Dataset media and derived data are covered by `recording/LICENSE.txt`. Three.js 0.180.0 and OrbitControls retain their MIT notice in `vendor/THREE-LICENSE.txt`; procedural meshes are original project code. No vendor library was downloaded or changed for this integration.
+Metadata and image/frame SHA256 checks are in `recording/manifest.json` and `recording/asset-integrity.json`. Dataset media and derived data are covered by `recording/LICENSE.txt`. Three.js 0.180.0 and OrbitControls retain their MIT notice in `vendor/THREE-LICENSE.txt`; vehicle assets retain their separate CC0 provenance. No vendor library was downloaded or changed for this integration.
 
 ## Reproduce or replace deliberately
 

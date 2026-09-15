@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Recorded model replay · FSD research</title>
-  <link rel="stylesheet" href="replay.css?v=20260914">
+  <link rel="stylesheet" href="replay.css?v=20260915">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-  <script type="module" src="replay.js?v=20260914"></script>
+  <script type="module" src="replay.js?v=20260915"></script>
 </head>
 <body>
 <main class="replay">
@@ -23,7 +23,7 @@
         <button id="topdown" aria-pressed="false">Top view</button>
         <button id="reset-view">Reset view</button>
       </div>
-      <div class="scene-bottom"><p>Drag to orbit · scroll to zoom · click an object to inspect</p><div class="legend"><span><i class="road"></i>Road</span><span><i class="sidewalk"></i>Sidewalk</span><span><i class="other"></i>Other ground</span><span><i class="person"></i>Person</span></div></div>
+      <div class="scene-bottom"><p>Drag to orbit · scroll to zoom · click an object to inspect</p><div class="legend"><span><i class="road"></i>Road</span><span><i class="nonroad"></i>Non-road</span><span><i class="ego"></i>Ego</span><span><i class="person"></i>Person</span></div></div>
       <p id="webgl-error" class="webgl-error" hidden>3D rendering is unavailable in this browser. Camera playback and object values still work; try a browser with WebGL enabled.</p>
     </section>
     <section class="cameras" aria-label="Synchronized camera views">
@@ -43,7 +43,7 @@
   </div>
   <div class="inspection">
     <label class="confidence" for="confidence">Object confidence <output id="confidence-value" for="confidence">0.55</output><input id="confidence" aria-label="Object confidence" type="range" min="0.01" max="1" step=".01" value=".55"></label>
-    <div class="inspection-tools"><label class="check"><input id="grid" type="checkbox"> Metric grid</label><label class="check"><input id="boxes" type="checkbox"> 3D box outlines</label><span id="object-count">No frame loaded</span></div>
+    <div class="inspection-tools"><label class="check"><input id="grid" type="checkbox"> Metric grid</label><label class="check"><input id="boxes" type="checkbox"> 3D box outlines</label><label class="check"><input id="raw-road" type="checkbox"> Original road grid</label><span id="object-count">No frame loaded</span></div>
     <label class="object-label" for="object-select">Inspect a prediction</label><select id="object-select"><option value="-1">Select an object</option></select>
     <p id="object-details">Choose an object to see its class, confidence, position, dimensions and yaw.</p>
   </div>
@@ -51,7 +51,8 @@
     <summary>Checkpoint, clip selection, limitations and attribution</summary>
     <div id="provenance-body"></div>
   </details>
-  <p class="footer-note">The dark reference vehicle is a fixed graphic. Road colours, cars and pedestrians come from the model. Playback uses approximately 2 Hz recorded keyframes; replay speed is not inference throughput.</p>
+  <p class="footer-note" id="surface-note">Smoothed road / non-road surfaces. Boundaries are display geometry, not predicted lane lines.</p>
+  <p class="footer-note">The red character car is a fixed ego graphic. Vehicle meshes illustrate the predicted car class, not a detected make or body style. Road regions, object poses and scores come from the model. Playback uses approximately 2 Hz recorded keyframes; replay speed is not inference throughput.</p>
 </main>
 </body>
 </html>

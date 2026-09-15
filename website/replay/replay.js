@@ -1,5 +1,5 @@
 import {assetPath, visibleObjects, projectBox, frameDelay, clamp} from './math.mjs';
-import {SceneRenderer} from './scene-renderer.js';
+import {SceneRenderer,prepareVehicleAssets} from './scene-renderer.js?v=20260915';
 
 const $=id=>document.getElementById(id);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -168,7 +168,7 @@ function provenance() {
     '<ul>'+data.limitations.map(item=>'<li>'+escape(item)+'</li>').join('')+'</ul>'+
     '<p>'+link(data.attribution.url,data.attribution.dataset)+'. '+escape(data.attribution.paper)+'</p>'+
     '<p>'+link(data.attribution.license_url,data.attribution.license)+'; '+link(data.attribution.terms,'dataset terms')+'. '+escape(data.attribution.changes)+'</p>'+
-    '<p>'+escape(data.attribution.endorsement)+' Procedural meshes adapted from the project viewer; Three.js and OrbitControls are MIT-licensed. '+link('./vendor/THREE-LICENSE.txt','Three.js license')+
+    '<p>'+escape(data.attribution.endorsement)+' Vehicle meshes adapted in Blender from Quaternius and Kenney CC0 assets; original character details and contour surfaces are presentation only. '+link('./scene-style/assets/ASSET-SOURCES.txt','Vehicle sources and licenses')+'. Three.js and OrbitControls are MIT-licensed. '+link('./vendor/THREE-LICENSE.txt','Three.js license')+
     '. '+link('./recording/asset-integrity.json','Asset hashes')+'.</p>';
 }
 async function init() {
@@ -188,7 +188,7 @@ async function init() {
       button.onclick=()=>{cameraIndex=index;updateCamera();};
       $('camera-tabs').append(button);cameraButtons.push(button);
     });
-    try {renderer=new SceneRenderer($('viewport'),chooseObject);}catch(problem){$('webgl-error').hidden=false;console.warn('3D viewer unavailable:',problem.message);}
+    try {await prepareVehicleAssets();renderer=new SceneRenderer($('viewport'),chooseObject);}catch(problem){$('webgl-error').hidden=false;console.warn('3D viewer unavailable:',problem.message);}
     if(embeddedVisible && !document.hidden)await loadFrame(0);
   } catch(problem) {error(problem.message);$('load-status').textContent='Replay could not initialize.';}
 }
@@ -208,6 +208,10 @@ $('confidence').oninput=()=>{$('confidence-value').textContent=Number($('confide
 $('object-select').onchange=()=>chooseObject(Number($('object-select').value));
 $('overlay').onchange=updateProjection;
 $('boxes').onchange=updateObjects;
+$('raw-road').onchange=()=>{
+  if(renderer){renderer.rawRoad=$('raw-road').checked;renderer.frame=null;updateObjects();}
+  $('surface-note').textContent=$('raw-road').checked?'Original predicted grid: road / sidewalk / other ground.':'Smoothed road / non-road surfaces. Boundaries are display geometry, not predicted lane lines.';
+};
 $('grid').onchange=()=>{if(renderer){renderer.grid.visible=$('grid').checked;renderer.draw();}};
 $('perspective').onclick=()=>setView(false);$('topdown').onclick=()=>setView(true);$('reset-view').onclick=()=>setView(false);
 $('speed').onchange=()=>{if(playing){clearTimeout(timer);schedule();}};

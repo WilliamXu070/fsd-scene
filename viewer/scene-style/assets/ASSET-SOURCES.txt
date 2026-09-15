@@ -1,0 +1,18 @@
+Vehicle asset provenance
+
+Surrounding traffic: **Car** by Quaternius, Cars Pack (CC0 1.0).
+
+- Creator and license: https://quaternius.com/packs/cars.html
+- Selected sedan and license: https://poly.pizza/m/Cz6yDaUcM9
+- Model file served by that preview: https://static.poly.pizza/59a67a6c-490e-472e-bae6-5a4d2541f1c7.glb.br
+- Adaptation: metric normalization, light edge bevels, weighted normals, neutral body and smoked-glass materials, compact geometry export. The original wheel geometry is retained. No detected make or sedan subtype is asserted.
+
+Ego vehicle: **sedan-sports.glb** from Kenney Car Kit 3.1 (CC0 1.0).
+
+- Creator and license: https://kenney.nl/assets/car-kit
+- Original license notice: `KENNEY-LICENSE.txt`.
+- Adaptation: beveled surfaces, normal cleanup, red paint, round wheels, and original windshield-eye/stripe/side-flash geometry. The character is an original playful race-car treatment, not a downloaded Lightning McQueen or Disney/Pixar asset.
+
+CC0: https://creativecommons.org/publicdomain/zero/1.0/
+
+Both assets are openly reusable alternatives, not Tesla's FSD visualization binaries. No affiliation with or endorsement by Tesla, Quaternius, Kenney, Disney or Pixar is implied. Raw downloaded asset packs and editable Blender builds remain under local `artifacts/renderer-polish/`; only these selected display meshes and attribution are public. These files are visualization assets, not ML model weights.

@@ -8,3 +8,4 @@
 .dataset-note{position:absolute;top:91px;left:27px;right:27px;max-width:560px;padding:11px 14px;background:rgba(255,249,235,.97);border-left:3px solid #b39252;color:#725a2e;font-size:12px;line-height:1.5;border-radius:3px}.coverage-note{font-size:9px;color:#7b8790;line-height:1.4;margin-top:7px;max-width:460px}.legend-block{display:block}.orbit-hint{bottom:70px}@media(max-width:720px){.dataset-note{top:88px;left:20px;right:20px;font-size:11px}.coverage-note{max-width:260px}.orbit-hint{bottom:86px}}
 
 .scene-stats .timing-note{font-size:9px;line-height:1.4;color:#8a949c;margin-top:6px}
+.swatch.road{background:#fff;border:1px solid #b5bdc7}.swatch.nonroad{background:#dce0e5}.swatch.ego{background:#d91f32}.render-options{display:grid;gap:8px}.scene-bottom{padding-top:16px;background:linear-gradient(transparent,#f6f7f9e8)}.coverage-note a{color:inherit}.scene-panel{background:#f6f7f9}

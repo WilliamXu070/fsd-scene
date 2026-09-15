@@ -88,8 +88,11 @@ def test_server_serves_assets_and_rejects_traversal(tmp_path):
         with urllib.request.urlopen(base+'/api/status') as r: assert json.load(r)['frames']==1
         with urllib.request.urlopen(base+'/') as r: assert b'Scene replay' in r.read()
         with urllib.request.urlopen(base+'/replay-requests.js') as r: assert b'LatestFrameRequest' in r.read()
+        with urllib.request.urlopen(base+'/scene-style/road-contours.js') as r: assert b'traceRegions' in r.read()
+        with urllib.request.urlopen(base+'/scene-style/assets/traffic-sedan.mesh.js') as r: assert b'"license":"CC0-1.0"' in r.read()
+        with urllib.request.urlopen(base+'/scene-style/assets/ASSET-SOURCES.txt') as r: assert b'Quaternius' in r.read()
         with urllib.request.urlopen(base+'/api/frame?index=0') as r: assert json.load(r)['frame_id']==10
-        for invalid in ['/../pyproject.toml','/%2e%2e/pyproject.toml','/api/frame?index=-1','/api/image?index=0&camera=4']:
+        for invalid in ['/../pyproject.toml','/%2e%2e/pyproject.toml','/%2e%2e/data/manifest.json','/model.pt','/api/frame?index=-1','/api/image?index=0&camera=4']:
             with pytest.raises(urllib.error.HTTPError) as exc:urllib.request.urlopen(base+invalid)
             assert exc.value.code in (400,404)
     finally:
